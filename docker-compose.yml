@@ -5,15 +5,17 @@ services:
     build: .
     container_name: travis-ops-center
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:8080"
     volumes:
       - ./data:/app/data
       - ./evidence:/app/evidence
       - ./logs:/app/logs
       - ./evidence_notes:/app/evidence_notes
     environment:
-      - FLASK_ENV=production
+      - FLASK_ENV=${FLASK_ENV:-production}
       - PYTHONUNBUFFERED=1
+      - AUTH_USER=${AUTH_USER}
+      - AUTH_PASS=${AUTH_PASS}
     restart: unless-stopped
     networks:
       - ops-net

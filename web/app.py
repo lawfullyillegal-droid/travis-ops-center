@@ -1,4 +1,5 @@
 from flask import Flask, render_template, send_file, abort, Response
+from flask_httpauth import HTTPBasicAuth
 from pathlib import Path
 import sqlite3
 import os
@@ -9,6 +10,18 @@ AUDIT_LOG = REPO_ROOT / 'logs' / 'audit.log'
 EVIDENCE_BASE = REPO_ROOT / 'evidence'
 
 app = Flask(__name__, static_folder=str(REPO_ROOT / 'web' / 'static'))
+auth = HTTPBasicAuth()
+
+# Optional authentication (enable via AUTH_USER env var)
+ENABLED_AUTH = os.getenv('AUTH_USER') and os.getenv('AUTH_PASS')
+AUTH_USER = os.getenv('AUTH_USER', 'admin')
+AUTH_PASS = os.getenv('AUTH_PASS', 'password')
+
+@auth.verify_password
+def verify_password(username, password):
+    if not ENABLED_AUTH:
+        return True
+    return username == AUTH_USER and password == AUTH_PASS
 
 def get_db_conn():
     if not DB_PATH.exists():
@@ -18,6 +31,7 @@ def get_db_conn():
     return conn
 
 @app.route('/')
+@auth.login_required
 def index():
     conn = get_db_conn()
     rows = []
@@ -29,6 +43,7 @@ def index():
     return render_template('index.html', entries=rows)
 
 @app.route('/evidence/<eid>')
+@auth.login_required
 def evidence_detail(eid):
     conn = get_db_conn()
     if not conn:
@@ -42,6 +57,7 @@ def evidence_detail(eid):
     return render_template('evidence.html', entry=row)
 
 @app.route('/file/<eid>')
+@auth.login_required
 def serve_file(eid):
     conn = get_db_conn()
     if not conn:
@@ -63,6 +79,7 @@ def serve_file(eid):
     return send_file(str(stored), as_attachment=True)
 
 @app.route('/logs')
+@auth.login_required
 def view_logs():
     if not AUDIT_LOG.exists():
         return Response('No logs found', mimetype='text/plain')
