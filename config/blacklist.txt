@@ -1,0 +1,4 @@
+# Additional blacklist patterns (one per line, regex allowed)
+# Example: prevent executing wget|sh pipelines
+curl .* \| sh
+wget .* \| sh

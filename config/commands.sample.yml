@@ -1,0 +1,13 @@
+# Sample commands list for the command center
+# Copy this to config/commands.yml and edit allowed commands.
+
+commands:
+  - id: list_home
+    label: List home directory
+    cmd: ls -lah ~
+  - id: disk_usage
+    label: Show disk usage
+    cmd: df -h
+  - id: git_status
+    label: Git status (repo root)
+    cmd: git -C $(pwd) status --short || true

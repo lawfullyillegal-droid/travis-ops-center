@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Evidence {{ entry['id'] }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <h1>Evidence {{ entry['id'] }}</h1>
+    <ul>
+      <li><strong>Timestamp:</strong> {{ entry['ts'] }}</li>
+      <li><strong>Original filename:</strong> {{ entry['filename'] }}</li>
+      <li><strong>Stored path:</strong> {{ entry['stored_path'] }}</li>
+      <li><strong>SHA256:</strong> {{ entry['sha256'] }}</li>
+      <li><strong>Size:</strong> {{ entry['size'] }}</li>
+      <li><strong>Notes:</strong> {{ entry['notes'] }}</li>
+    </ul>
+    <p><a href="/file/{{ entry['id'] }}">Download file</a></p>
+    <p><a href="/">Back to list</a></p>
+  </body>
+</html>

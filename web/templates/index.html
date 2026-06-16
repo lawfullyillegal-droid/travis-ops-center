@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Evidence Browser</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <h1>Evidence Ledger</h1>
+    <p><a href="/logs">View audit log</a></p>
+    <table>
+      <thead><tr><th>ID</th><th>TS</th><th>Filename</th><th>Size</th><th>Notes</th></tr></thead>
+      <tbody>
+      {% for e in entries %}
+        <tr>
+          <td><a href="/evidence/{{ e['id'] }}">{{ e['id'] }}</a></td>
+          <td>{{ e['ts'] }}</td>
+          <td>{{ e['filename'] }}</td>
+          <td>{{ e['size'] }}</td>
+          <td>{{ e['notes'] }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>
