@@ -58,3 +58,60 @@ python3 scripts/gen_evidence_note.py evidence-YYYYMMDDT...-<hashprefix>
 Security notes:
 - This scaffold intentionally requires you to list allowed commands in `config/commands.yml` so you can avoid executing risky tools.
 - The audit logs are written to `logs/audit.log` as JSONL.
+
+## Deployment
+
+### Docker (recommended for servers/always-on)
+
+**Local development:**
+```bash
+docker-compose up --build
+# open http://localhost:8080
+```
+
+**On a server (Linux/VPS):**
+```bash
+git clone https://github.com/lawfullyillegal-droid/travis-ops-center.git
+cd travis-ops-center
+docker-compose up -d
+# access via http://<server-ip>:8080
+```
+
+**With reverse proxy (nginx) for HTTPS:**
+```nginx
+server {
+  listen 443 ssl http2;
+  server_name your-domain.com;
+  ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+  location / {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+}
+```
+
+### Manual deployment (no Docker):
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 web/app.py
+```
+
+## Authentication & Security
+
+**IMPORTANT:** The web UI has NO authentication by default. Before exposing it publicly:
+
+1. **Use a firewall** — only allow trusted IPs
+2. **Run behind a reverse proxy** — use nginx/Apache with authentication
+3. **Add HTTP Basic Auth** (optional enhancement):
+   ```bash
+   pip install Flask-HTTPAuth
+   # Then edit web/app.py to add @auth.login_required decorators
+   ```
+4. **Use VPN or SSH tunneling** — don't expose directly to the internet
+
+**Recommend:** Keep it on an internal network or access via VPN only.

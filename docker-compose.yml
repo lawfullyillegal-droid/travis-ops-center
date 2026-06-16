@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ops-center:
+    build: .
+    container_name: travis-ops-center
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./evidence:/app/evidence
+      - ./logs:/app/logs
+      - ./evidence_notes:/app/evidence_notes
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ops-net
+
+networks:
+  ops-net:
+    driver: bridge
