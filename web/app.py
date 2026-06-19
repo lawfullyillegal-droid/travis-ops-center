@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_file, abort, Response
+from flask import Flask, render_template, send_file, abort, Response, jsonify
 from flask_httpauth import HTTPBasicAuth
 from pathlib import Path
 import sqlite3
@@ -33,14 +33,19 @@ def get_db_conn():
 @app.route('/')
 @auth.login_required
 def index():
+    return render_template('dashboard.html')
+
+@app.route('/api/ledger')
+@auth.login_required
+def ledger_api():
     conn = get_db_conn()
-    rows = []
-    if conn:
-        cur = conn.cursor()
-        cur.execute('SELECT id,ts,filename,stored_path,sha256,size,notes FROM ledger ORDER BY ts DESC')
-        rows = cur.fetchall()
-        conn.close()
-    return render_template('index.html', entries=rows)
+    if not conn:
+        return jsonify([])
+    cur = conn.cursor()
+    cur.execute('SELECT id,ts,filename,stored_path,sha256,size,notes FROM ledger ORDER BY ts DESC')
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return jsonify(rows)
 
 @app.route('/evidence/<eid>')
 @auth.login_required
@@ -88,4 +93,4 @@ def view_logs():
     return Response(data, mimetype='text/plain')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    app.run(host='0.0.0.0', port=int(os.getenv('SERVER_PORT', 8080)), debug=False)

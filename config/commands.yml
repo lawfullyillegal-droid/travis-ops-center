@@ -1,0 +1,224 @@
+---
+# Travis Ops Center - Command Vault
+# OSINT and System Reconnaissance Commands
+# Last Updated: 2026-06-19
+# Operator: lawfullyillegal-droid
+
+commands:
+  # Network Reconnaissance
+  - id: nmap_scan
+    label: Network mapping and port scanning
+    cmd: nmap -sV -sC -A -T4 {target}
+    category: network
+    requires_root: false
+    timeout: 300
+    
+  - id: nmap_aggressive
+    label: Aggressive network scan with OS detection
+    cmd: nmap -A -T4 -p- --osscan-guess {target}
+    category: network
+    requires_root: false
+    timeout: 600
+    
+  - id: whois_lookup
+    label: WHOIS lookup for domain/IP registration
+    cmd: whois {target}
+    category: reconnaissance
+    requires_root: false
+    timeout: 30
+    
+  - id: dns_dig
+    label: DNS lookup and enumeration
+    cmd: dig {target} +short
+    category: reconnaissance
+    requires_root: false
+    timeout: 30
+    
+  - id: dns_full
+    label: Full DNS record enumeration
+    cmd: dig {target} ANY
+    category: reconnaissance
+    requires_root: false
+    timeout: 30
+
+  # HTTP/Web Reconnaissance
+  - id: curl_headers
+    label: HTTP request with headers and response
+    cmd: curl -I -L -A 'Mozilla/5.0' {target}
+    category: web
+    requires_root: false
+    timeout: 30
+    
+  - id: curl_body
+    label: Fetch full HTTP response body
+    cmd: curl -L -A 'Mozilla/5.0' {target}
+    category: web
+    requires_root: false
+    timeout: 30
+    
+  - id: gobuster_dir
+    label: Directory and file enumeration
+    cmd: gobuster dir -u {target} -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -q
+    category: web
+    requires_root: false
+    timeout: 300
+
+  # System Monitoring
+  - id: netstat_all
+    label: Network statistics and active connections
+    cmd: netstat -tulpn
+    category: system
+    requires_root: false
+    timeout: 10
+    
+  - id: netstat_established
+    label: Show established connections only
+    cmd: netstat -tun | grep ESTABLISHED
+    category: system
+    requires_root: false
+    timeout: 10
+    
+  - id: process_list
+    label: Process listing with details
+    cmd: ps auxf
+    category: system
+    requires_root: false
+    timeout: 10
+    
+  - id: network_processes
+    label: Network-related processes
+    cmd: ps aux | grep -E '(ssh|http|ftp|smtp)'
+    category: system
+    requires_root: false
+    timeout: 10
+    
+  - id: disk_usage
+    label: Disk space usage
+    cmd: df -h
+    category: system
+    requires_root: false
+    timeout: 10
+    
+  - id: open_files
+    label: Open files and network sockets
+    cmd: lsof -i -P -n
+    category: system
+    requires_root: false
+    timeout: 10
+
+  # Git Analysis
+  - id: git_log_history
+    label: Git commit history
+    cmd: git -C {target} log --oneline -20
+    category: vcs
+    requires_root: false
+    timeout: 30
+    
+  - id: git_contributors
+    label: Git contributors and commit counts
+    cmd: git -C {target} shortlog -sn
+    category: vcs
+    requires_root: false
+    timeout: 30
+    
+  - id: git_diff_recent
+    label: Git diff for recent changes
+    cmd: git -C {target} diff HEAD~5 HEAD
+    category: vcs
+    requires_root: false
+    timeout: 30
+
+  # Container Analysis
+  - id: docker_running
+    label: List running Docker containers
+    cmd: docker ps -a --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}'
+    category: container
+    requires_root: true
+    timeout: 10
+    
+  - id: docker_images_list
+    label: List Docker images
+    cmd: docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.Created}}'
+    category: container
+    requires_root: true
+    timeout: 10
+    
+  - id: docker_logs_view
+    label: Get Docker container logs
+    cmd: docker logs --tail 100 {target}
+    category: container
+    requires_root: true
+    timeout: 30
+
+  # OSINT Tools
+  - id: ping_target
+    label: ICMP echo request
+    cmd: ping -c 5 {target}
+    category: reconnaissance
+    requires_root: false
+    timeout: 15
+    
+  - id: traceroute_path
+    label: Network route tracing
+    cmd: traceroute -m 15 {target}
+    category: reconnaissance
+    requires_root: false
+    timeout: 30
+    
+  - id: sherlock_username
+    label: Username search across social media
+    cmd: sherlock {target} --csv
+    category: osint
+    requires_root: false
+    timeout: 120
+    
+  - id: harvester_emails
+    label: Email and subdomain harvester
+    cmd: theHarvester -d {target} -b google,bing,linkedin,twitter
+    category: osint
+    requires_root: false
+    timeout: 120
+
+  # Custom Analysis
+  - id: ssl_certificate
+    label: SSL certificate information
+    cmd: openssl s_client -connect {target}:443 -showcerts </dev/null 2>/dev/null | openssl x509 -noout -text
+    category: web
+    requires_root: false
+    timeout: 30
+    
+  - id: security_headers
+    label: Security headers check
+    cmd: curl -s -I {target} | grep -iE '(strict-transport|x-frame|x-content|csp|x-xss)'
+    category: web
+    requires_root: false
+    timeout: 30
+    
+  - id: list_home
+    label: List home directory
+    cmd: ls -lah ~
+    category: system
+    requires_root: false
+    timeout: 10
+    
+  - id: git_status
+    label: Git status (repo root)
+    cmd: git -C $(pwd) status --short || true
+    category: vcs
+    requires_root: false
+    timeout: 10
+
+categories:
+  network: "Network and port scanning"
+  reconnaissance: "General reconnaissance"
+  web: "Web application testing"
+  system: "System monitoring and analysis"
+  vcs: "Version control analysis"
+  container: "Container and Docker analysis"
+  osint: "Open source intelligence"
+
+metadata:
+  version: "2.0"
+  last_updated: "2026-06-19"
+  operator: "lawfullyillegal-droid"
+  total_commands: 31

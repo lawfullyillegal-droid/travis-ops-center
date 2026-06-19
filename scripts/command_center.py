@@ -6,12 +6,15 @@ Executes selected command after confirmation and logs via audit_logger.
 """
 import curses
 import subprocess
+import sys
 import yaml
 import os
 from pathlib import Path
-import scripts.audit_logger as audit
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+import scripts.audit_logger as audit
+
 CONFIG_PATH = REPO_ROOT / "config" / "commands.yml"
 
 def load_commands():

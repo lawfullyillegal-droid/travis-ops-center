@@ -3,14 +3,505 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LAWFULLY ILLEGAL — Public Accountability Enforcement Agency</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Travis Ops Center — Evidence Management & Command Execution</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background-color: #0a0e27;
+      color: #e0e0e0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+    
+    header {
+      background: linear-gradient(135deg, #1a1f3a 0%, #0f1425 100%);
+      border-bottom: 2px solid #00ff41;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 20px rgba(0, 255, 65, 0.1);
+    }
+    
+    .logo-block h1 {
+      color: #00ff41;
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+      margin-bottom: 0.2rem;
+    }
+    
+    .logo-block p {
+      color: #00ff41;
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+    
+    .status-bar {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #00ff41;
+      animation: pulse 2s infinite;
+    }
+    
+    .dot.amber {
+      background-color: #ffaa00;
+    }
+    
+    .dot.red {
+      background-color: #ff0055;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    nav {
+      background-color: #0f1425;
+      border-bottom: 1px solid #1a3a4a;
+      display: flex;
+      padding: 0 1.5rem;
+      overflow-x: auto;
+    }
+    
+    nav button {
+      background: none;
+      border: none;
+      color: #00ff41;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-family: inherit;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    
+    nav button:hover {
+      background-color: rgba(0, 255, 65, 0.05);
+      border-bottom-color: #00ff41;
+    }
+    
+    nav button.active {
+      border-bottom-color: #00ff41;
+      background-color: rgba(0, 255, 65, 0.1);
+    }
+    
+    .app {
+      display: flex;
+      height: calc(100vh - 120px);
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 250px;
+      background-color: #0f1425;
+      border-right: 1px solid #1a3a4a;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    
+    .widget {
+      background-color: #1a1f3a;
+      border: 1px solid #2a3a5a;
+      border-radius: 4px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .widget h3 {
+      color: #00ff41;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid #2a3a5a;
+      padding-bottom: 0.5rem;
+    }
+    
+    .widget-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      font-size: 0.75rem;
+    }
+    
+    .widget-row span.green {
+      color: #00ff41;
+    }
+    
+    .widget-row span.red {
+      color: #ff0055;
+    }
+    
+    .action-btn {
+      width: 100%;
+      background-color: #00ff41;
+      color: #0a0e27;
+      border: none;
+      padding: 0.6rem;
+      margin: 0.3rem 0;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.75rem;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+      background-color: #00dd35;
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
+    
+    .main-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .panel {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+    
+    .panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #1a3a4a;
+      padding-bottom: 0.75rem;
+    }
+    
+    .section-header h2 {
+      color: #00ff41;
+      font-size: 1.2rem;
+    }
+    
+    .badge {
+      background-color: #00ff41;
+      color: #0a0e27;
+      padding: 0.25rem 0.75rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #1a1f3a 0%, #2a2f4a 100%);
+      border: 1px solid #2a3a5a;
+      border-left: 3px solid #00ff41;
+      padding: 1rem;
+      border-radius: 4px;
+      text-align: center;
+    }
+    
+    .stat-card .label {
+      color: #999;
+      font-size: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-card .value {
+      color: #00ff41;
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-card .sub {
+      color: #666;
+      font-size: 0.7rem;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+    
+    .data-table thead {
+      background-color: #1a1f3a;
+      border-bottom: 2px solid #00ff41;
+    }
+    
+    .data-table th {
+      color: #00ff41;
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    
+    .data-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #1a3a4a;
+      font-size: 0.75rem;
+    }
+    
+    .data-table tr:hover {
+      background-color: rgba(0, 255, 65, 0.05);
+    }
+    
+    .feed-item {
+      background-color: #1a1f3a;
+      border: 1px solid #2a3a5a;
+      border-left: 3px solid #00ff41;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      border-radius: 4px;
+    }
+    
+    .feed-item.priority-high {
+      border-left-color: #ff0055;
+    }
+    
+    .feed-item.priority-medium {
+      border-left-color: #ffaa00;
+    }
+    
+    .feed-item.priority-low {
+      border-left-color: #00ff41;
+    }
+    
+    .feed-meta {
+      color: #666;
+      font-size: 0.7rem;
+      margin-bottom: 0.3rem;
+    }
+    
+    .feed-item h4 {
+      color: #00ff41;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+    
+    .feed-item p {
+      color: #999;
+      font-size: 0.75rem;
+    }
+    
+    .terminal {
+      background-color: #0f0f15;
+      border: 1px solid #2a3a5a;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .terminal-bar {
+      background-color: #1a1f3a;
+      padding: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid #2a3a5a;
+      font-size: 0.7rem;
+    }
+    
+    .terminal-dots {
+      display: flex;
+      gap: 0.3rem;
+    }
+    
+    .td-red, .td-amber, .td-green {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .td-red { background-color: #ff0055; }
+    .td-amber { background-color: #ffaa00; }
+    .td-green { background-color: #00ff41; }
+    
+    .terminal-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    
+    .line {
+      color: #00ff41;
+      margin-bottom: 0.2rem;
+    }
+    
+    .line.out {
+      color: #e0e0e0;
+    }
+    
+    .line.prompt {
+      color: #666;
+    }
+    
+    .terminal-input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1rem 1rem 1rem;
+      background-color: #0f0f15;
+      border-top: 1px solid #2a3a5a;
+    }
+    
+    .terminal-input-row span {
+      color: #00ff41;
+    }
+    
+    .terminal-input-row input {
+      flex: 1;
+      background-color: transparent;
+      border: none;
+      outline: none;
+      color: #00ff41;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+    }
+    
+    .terminal-input-row input::placeholder {
+      color: #666;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background-color: #0f1425;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background-color: #2a3a5a;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #3a4a6a;
+    }
+    
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .evidence-card {
+      background-color: #1a1f3a;
+      border: 1px solid #2a3a5a;
+      border-left: 3px solid #00ff41;
+      padding: 1rem;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .evidence-card-header {
+      color: #00ff41;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      word-break: break-all;
+    }
+    
+    .evidence-card-info {
+      font-size: 0.7rem;
+      color: #999;
+      margin-bottom: 0.25rem;
+    }
+    
+    .evidence-card-info strong {
+      color: #e0e0e0;
+    }
+    
+    .command-vault {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    
+    .command-card {
+      background-color: #1a1f3a;
+      border: 1px solid #2a3a5a;
+      border-top: 2px solid #00ff41;
+      padding: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .command-card:hover {
+      border-top-color: #00dd35;
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .command-card-name {
+      color: #00ff41;
+      font-weight: bold;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .command-card-desc {
+      color: #999;
+      font-size: 0.7rem;
+      line-height: 1.3;
+    }
+    
+    .command-card-category {
+      display: inline-block;
+      background-color: #2a3a5a;
+      color: #00ff41;
+      padding: 0.2rem 0.5rem;
+      border-radius: 2px;
+      font-size: 0.65rem;
+      margin-top: 0.5rem;
+    }
+  </style>
 </head>
 <body>
   <header>
     <div class="logo-block">
-      <h1>LAWFULLY ILLEGAL</h1>
-      <p>Public Accountability Enforcement Agency</p>
+      <h1>TRAVIS OPS CENTER</h1>
+      <p>Evidence Management & Command Execution Platform</p>
     </div>
     <div class="status-bar">
       <div class="status-indicator">
@@ -18,12 +509,16 @@
         <span>System Online</span>
       </div>
       <div class="status-indicator">
-        <div class="dot amber"></div>
+        <div class="dot"></div>
         <span id="cases-live">0 Cases Active</span>
       </div>
       <div class="status-indicator">
         <div class="dot"></div>
-        <span id="evidence-live">0 Evidence Logged</span>
+        <span id="evidence-live">31 Evidence Items</span>
+      </div>
+      <div class="status-indicator">
+        <div class="dot"></div>
+        <span>Operator: lawfullyillegal-droid</span>
       </div>
     </div>
   </header>

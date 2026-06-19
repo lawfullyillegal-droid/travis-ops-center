@@ -1,0 +1,94 @@
+---
+# Travis Ops Center - Global Settings
+# Operator Configuration
+# Case Management
+# System Behavior
+
+# Database Configuration
+database:
+  path: "/workspaces/travis-ops-center/data/evidence.db"
+  type: "sqlite3"
+  backup_enabled: true
+  backup_frequency: "daily"
+  backup_retention_days: 30
+
+# Logging Configuration
+logging:
+  level: "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_path: "/workspaces/travis-ops-center/logs/audit.log"
+  max_file_size_mb: 100
+  backup_count: 10
+  console_enabled: true
+
+# Operator Configuration
+operator:
+  name: "lawfullyillegal-droid"
+  email: "ops@travis-center.local"
+  role: "lead_investigator"
+  privileges: ["execute_commands", "manage_evidence", "create_cases", "audit_logs"]
+
+# Case Management
+case_management:
+  default_case_number: "44"
+  case_directory: "/workspaces/travis-ops-center/data"
+  auto_numbering: true
+  retention_days: 90
+  archive_old_cases: true
+
+# Evidence Configuration
+evidence:
+  storage_path: "/workspaces/travis-ops-center/evidence"
+  temp_path: "/tmp/travis-evidence"
+  file_retention_days: 365
+  compression_enabled: true
+  compression_format: "gzip"
+  auto_hash_verification: true
+  hash_algorithm: "sha256"
+
+# Web Interface
+web:
+  host: "0.0.0.0"
+  port: 5000
+  debug_mode: true
+  session_timeout_minutes: 60
+  max_concurrent_sessions: 10
+  theme: "dark"
+
+# Command Execution
+command_execution:
+  timeout_seconds: 300
+  max_parallel_commands: 5
+  capture_stdout: true
+  capture_stderr: true
+  log_all_commands: true
+  require_confirmation: false
+
+# Security
+security:
+  enable_authentication: false
+  enable_https: false
+  certificate_path: ""
+  api_key_required: false
+  rate_limiting_enabled: false
+
+# Notifications
+notifications:
+  email_enabled: false
+  slack_enabled: false
+  log_to_file: true
+
+# System Behavior
+system:
+  auto_sync_vault: true
+  sync_interval_seconds: 300
+  cleanup_temp_files: true
+  cleanup_interval_hours: 6
+  verbose_output: true
+  development_mode: true
+
+metadata:
+  version: "1.0"
+  created_date: "2026-06-19T00:00:00Z"
+  last_modified: "2026-06-19T00:00:00Z"
+  environment: "development"

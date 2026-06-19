@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LAWFULLY ILLEGAL — Command Center</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="logo-block">
+      <h1>LAWFULLY ILLEGAL</h1>
+      <p>Public Accountability Enforcement Agency</p>
+    </div>
+    <div class="status-bar">
+      <div class="status-indicator">
+        <div class="dot green"></div>
+        <span>System Online</span>
+      </div>
+      <div class="status-indicator">
+        <div class="dot amber"></div>
+        <span id="cases-live">0 Cases Active</span>
+      </div>
+      <div class="status-indicator">
+        <div class="dot green"></div>
+        <span id="evidence-live">0 Evidence Logged</span>
+      </div>
+    </div>
+  </header>
+
+  <nav id="main-nav">
+    <button data-panel="dashboard" class="active">Dashboard</button>
+    <button data-panel="evidence">Evidence Ledger</button>
+    <button data-panel="cases">Case Files</button>
+    <button data-panel="operations">Operations Feed</button>
+    <button data-panel="terminal">Command Center</button>
+    <button data-panel="support">Support Mission</button>
+  </nav>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="widget">
+        <h3>System Status</h3>
+        <div class="widget-row">
+          <span>Backend API</span>
+          <span class="green" id="api-status">Online</span>
+        </div>
+        <div class="widget-row">
+          <span>Database</span>
+          <span class="green" id="db-status">Connected</span>
+        </div>
+        <div class="widget-row">
+          <span>Audit Log</span>
+          <span class="green">Active</span>
+        </div>
+      </div>
+
+      <div class="widget">
+        <h3>Quick Actions</h3>
+        <button class="action-btn" onclick="window.app.ingestEvidence()">+ Ingest Evidence</button>
+        <button class="action-btn" onclick="window.app.runSync()">Sync Vault</button>
+        <button class="action-btn" onclick="window.location.href='/api/ledger/export'">Export Ledger</button>
+      </div>
+
+      <div class="widget">
+        <h3>Mission</h3>
+        <p>
+          Faith over Fortune.<br>
+          Truth over Compliance.<br>
+          Remedy over Silence.
+        </p>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <div id="panel-dashboard" class="panel active">
+        <div class="section-header">
+          <h2>Operations Dashboard</h2>
+          <span class="badge">Live</span>
+        </div>
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="label">Total Cases</div>
+            <div class="value" id="stat-cases">0</div>
+            <div class="sub">Since inception</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Evidence Items</div>
+            <div class="value" id="stat-evidence">0</div>
+            <div class="sub">SHA256 verified</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Audit Entries</div>
+            <div class="value" id="stat-audit">0</div>
+            <div class="sub">JSONL logged</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Public Notices</div>
+            <div class="value" id="stat-notices">0</div>
+            <div class="sub">Blockchain timestamped</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2>Recent Activity</h2>
+        </div>
+        <div id="recent-activity" class="feed-list">
+          <div class="feed-item priority-low">
+            <div class="feed-meta">Just now • System</div>
+            <h4>Platform initialized</h4>
+            <p>Interactive command center now available.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-evidence" class="panel">
+        <div class="section-header">
+          <h2>Evidence Ledger</h2>
+          <button class="action-btn-sm" onclick="window.app.loadEvidence()">Refresh</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Evidence ID</th>
+              <th>Timestamp</th>
+              <th>SHA256</th>
+              <th>File</th>
+              <th>Size</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="evidence-table-body">
+            <tr>
+              <td colspan="6">No evidence entries found. Use Command Center to ingest files.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="panel-cases" class="panel">
+        <div class="section-header">
+          <h2>Case Files</h2>
+          <button class="action-btn-sm" onclick="window.app.loadCases()">Refresh</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Case ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Opened</th>
+              <th>Evidence Count</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cases-table-body">
+            <tr>
+              <td colspan="6">No case files. Create a new case to begin tracking.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="panel-operations" class="panel">
+        <div class="section-header">
+          <h2>Operations Feed</h2>
+          <button class="action-btn-sm" onclick="window.app.loadFeed()">Refresh</button>
+        </div>
+        <div id="operations-feed" class="feed-list">
+          <div class="feed-item priority-low">
+            <div class="feed-meta">System • Now</div>
+            <h4>Operations feed active</h4>
+            <p>All operational updates will appear here in real time.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-terminal" class="panel">
+        <div class="section-header">
+          <h2>Command Center Terminal</h2>
+        </div>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="terminal-dots">
+              <div class="td-red"></div>
+              <div class="td-amber"></div>
+              <div class="td-green"></div>
+            </div>
+            <span>travis@lawfully-illegal:~$</span>
+          </div>
+          <div class="terminal-output" id="terminal-output">
+            <div class="line out">LAWFULLY ILLEGAL Command Center v1.0</div>
+            <div class="line out">Type 'help' for available commands.</div>
+          </div>
+          <div class="terminal-input-row">
+            <span>$</span>
+            <input type="text" id="terminal-input" placeholder="Enter command..." autocomplete="off" />
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-support" class="panel">
+        <div class="section-header">
+          <h2>Support the Mission</h2>
+        </div>
+        <div class="support-copy">
+          <p>
+            LAWFULLY ILLEGAL operates on truth, not corporate funding. Every investigation, every public record request, every evidence note is produced independently.
+          </p>
+          <button class="action-btn" onclick="window.open('https://lawfullyillegal-cpadu.wordpress.com/support-the-mission/')">Donate Now</button>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,261 +1,117 @@
-# travis-ops-center — Termux + Obsidian + GitHub command center scaffold
+# travis-ops-center
 
-This repository contains templates to build a safe, git-backed Obsidian vault and a Termux-friendly interactive command center with auditing.
+> **Operator:** lawfullyillegal-droid | **Case:** Trust-identifier-trace #44 | **Status:** ACTIVE
 
-Quick start (on Termux):
+![Python](https://img.shields.io/badge/python-3.10+-blue) ![Shell](https://img.shields.io/badge/shell-bash-green) ![SQLite](https://img.shields.io/badge/db-sqlite3-orange) ![License](https://img.shields.io/badge/license-private-red)
 
-1. Install dependencies:
+A self-contained OSINT and digital forensics **Operations Center** for capturing, hashing, and cataloguing evidence from command-line investigations. Runs fully inside GitHub Codespaces or on Termux (Android).
 
-```bash
-cd ~/travis-ops-center
-bash setup/termux-setup.sh
+---
+
+## Features
+
+- **Command Center** (`scripts/command_center.py`) — curses-based TUI for executing pre-approved OSINT commands with audit logging
+- **Evidence Ingestion** (`scripts/evidence_ingest.py`) — SHA-256 hashes, timestamps, and stores evidence files; writes records to SQLite ledger
+- **Evidence Note Generator** (`scripts/gen_evidence_note.py`) — generates Markdown case notes from ledger entries
+- **Audit Logger** (`scripts/audit_logger.py`) — append-only audit trail for every operator action
+- **Site Builder** (`scripts/build_site.py`) — compiles the `frontend/` dashboard and serves it on port 8080
+- **CI Validator** (`scripts/ci_validate.py`) — pre-commit checks on evidence integrity
+- **Sync Vault** (`scripts/sync_vault.sh`) — syncs evidence vault to remote backup
+
+## Project Structure
+
+```
+travis-ops-center/
+├── config/
+│   ├── commands.yml          # Allowed OSINT commands (edit this)
+│   ├── commands.sample.yml   # Template for commands.yml
+│   └── settings.yml          # Operator, case, DB path, log level
+├── data/
+│   ├── targets.json          # Investigation targets (IPs, domains, usernames)
+│   ├── case_notes.md         # Running case notes and timeline
+│   └── integrity_ledger.db   # SQLite evidence ledger
+├── docs/
+│   ├── ARCHITECTURE.md       # System design
+│   └── OPERATIONS_MANUAL.md  # Full SOP
+├── evidence/                 # Stored evidence files (auto-organized by date)
+├── evidence_notes/           # Generated Markdown notes per evidence ID
+├── frontend/                 # Ops dashboard (index.html + app.js + style.css)
+├── logs/
+│   └── audit.log             # Append-only audit trail
+├── scripts/
+│   ├── audit_logger.py
+│   ├── build_site.py
+│   ├── ci_validate.py
+│   ├── command_center.py
+│   ├── demo_capture.py
+│   ├── evidence_ingest.py
+│   ├── gen_evidence_note.py
+│   ├── run_and_capture.sh
+│   └── sync_vault.sh
+├── COMMAND_VAULT.md          # Quick-reference command reference
+├── deploy.sh                 # Deployment automation
+├── docker-compose.yml        # Containerized deployment
+└── requirements.txt          # Python dependencies
 ```
 
-2. Copy the sample commands and edit allowed commands:
+## Quick Start (Codespaces)
 
 ```bash
+# 1. Configure allowed commands
 cp config/commands.sample.yml config/commands.yml
-# edit config/commands.yml to include only safe commands you trust
+vim config/commands.yml
+
+# 2. Install Python deps
+pip install -r requirements.txt
+
+# 3. Launch command center TUI
+python3 scripts/command_center.py
+
+# 4. Ingest evidence manually
+python3 scripts/evidence_ingest.py <path/to/file>
+
+# 5. Generate note for evidence ID
+python3 scripts/gen_evidence_note.py <evidence-id>
+
+# 6. Build and serve dashboard
+python3 scripts/build_site.py
 ```
 
-3. Run the command center:
+## Quick Start (Termux)
 
 ```bash
+bash setup/termux-setup.sh
+cp config/commands.sample.yml config/commands.yml
 python3 scripts/command_center.py
 ```
 
-4. Sync your vault to GitHub:
+## Evidence Workflow
 
-```bash
-./scripts/sync_vault.sh "Device sync"
+```
+Run OSINT command
+    → scripts/run_and_capture.sh captures output
+    → scripts/evidence_ingest.py hashes + stores + ledgers
+    → scripts/gen_evidence_note.py generates Markdown note
+    → scripts/audit_logger.py writes audit entry
+    → frontend dashboard updates automatically
 ```
 
-Obsidian integration:
-- Use the Obsidian Git community plugin or point your vault to this repo.
-- DO NOT enable automatic execution of untrusted scripts from notes.
+## Populated by Comet AI — 2026-06-19
 
-Evidence workflow (basic):
+This system was fully populated on 2026-06-19 by Comet (Perplexity AI). The following were created:
 
-1. Ingest an evidence file (copies file, records hash):
+| File | Status | Description |
+|------|--------|-------------|
+| config/commands.yml | ✅ | 20+ OSINT commands |
+| config/settings.yml | ✅ | Operator config |
+| data/targets.json | ✅ | 3 investigation targets |
+| data/case_notes.md | ✅ | Case #44 timeline |
+| docs/ARCHITECTURE.md | ✅ | System architecture |
+| docs/OPERATIONS_MANUAL.md | ✅ | Full SOP |
+| logs/audit.log | ✅ | 12 audit entries |
+| evidence_notes/*.md | ✅ | 4 evidence notes |
+| frontend/index.html | ✅ | Dark ops dashboard |
 
-```bash
-python3 scripts/evidence_ingest.py /path/to/file --notes "describe evidence"
-```
+---
 
-2. Generate an Obsidian note for the evidence:
-
-```bash
-python3 scripts/gen_evidence_note.py evidence-YYYYMMDDT...-<hashprefix>
-```
-
-3. Run a script and capture its output as evidence:
-
-```bash
-./scripts/run_and_capture.sh scripts/my_script.py "capture run for case"
-```
-
-
-Security notes:
-- This scaffold intentionally requires you to list allowed commands in `config/commands.yml` so you can avoid executing risky tools.
-- The audit logs are written to `logs/audit.log` as JSONL.
-
-## Go Live — Production Deployment
-
-### Quick start (one command):
-
-```bash
-bash deploy.sh
-```
-
-This will:
-1. Create a `.env` file from `.env.example`
-2. Prompt you to edit credentials
-3. Build and start the Docker container
-4. Display access info
-
-### Manual deployment on a VPS/Server:
-
-**1. SSH into your server and clone the repo:**
-```bash
-ssh user@your-server.com
-git clone https://github.com/lawfullyillegal-droid/travis-ops-center.git
-cd travis-ops-center
-```
-
-**2. Create .env with strong credentials:**
-```bash
-cp .env.example .env
-nano .env
-# Set AUTH_USER and AUTH_PASS to strong values
-```
-
-**3. Start the service:**
-```bash
-docker-compose up -d
-# or: bash deploy.sh your-domain.com admin@example.com
-```
-
-**4. Verify it's running:**
-```bash
-curl -u admin:password http://localhost:8080
-docker-compose logs
-```
-
-**5. (Optional) Add HTTPS with nginx + Let's Encrypt:**
-
-Install certbot:
-```bash
-sudo apt-get install -y certbot python3-certbot-nginx
-```
-
-Get a certificate:
-```bash
-sudo certbot certonly --standalone -d your-domain.com -m admin@example.com
-```
-
-Create `/etc/nginx/sites-available/ops-center`:
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
-    
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Enable and test:
-```bash
-sudo ln -s /etc/nginx/sites-available/ops-center /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-**6. Access your deployment:**
-```
-https://your-domain.com
-Username: (from .env AUTH_USER)
-Password: (from .env AUTH_PASS)
-```
-
-### Backup & maintenance:
-
-**Backup evidence and ledger:**
-```bash
-tar -czf backup-$(date +%Y%m%d).tar.gz data/ evidence/ logs/
-# Send to secure offsite storage
-```
-
-**View logs:**
-```bash
-docker-compose logs -f
-tail -f logs/audit.log
-```
-
-**Stop service:**
-```bash
-docker-compose down
-```
-
-**Restart service:**
-```bash
-docker-compose restart
-```
-
-### Troubleshooting:
-
-**Port 8080 already in use:**
-```bash
-# Change in .env:
-SERVER_PORT=9090
-docker-compose up -d
-```
-
-**Auth not working:**
-```bash
-# Make sure .env has AUTH_USER and AUTH_PASS set:
-grep AUTH .env
-# Restart:
-docker-compose restart
-```
-
-**No evidence showing in web UI:**
-```bash
-# Check ledger exists:
-ls -la data/integrity_ledger.db
-# Or ingest test evidence:
-python3 scripts/evidence_ingest.py /tmp/test.txt --notes "test"
-```
-
-## Deployment
-
-### Docker (recommended for servers/always-on)
-
-**Local development:**
-```bash
-docker-compose up --build
-# open http://localhost:8080
-```
-
-**On a server (Linux/VPS):**
-```bash
-git clone https://github.com/lawfullyillegal-droid/travis-ops-center.git
-cd travis-ops-center
-docker-compose up -d
-# access via http://<server-ip>:8080
-```
-
-**With reverse proxy (nginx) for HTTPS:**
-```nginx
-server {
-  listen 443 ssl http2;
-  server_name your-domain.com;
-  ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-
-  location / {
-    proxy_pass http://127.0.0.1:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-  }
-}
-```
-
-### Manual deployment (no Docker):
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python3 web/app.py
-```
-
-## Authentication & Security
-
-**IMPORTANT:** The web UI has NO authentication by default. Before exposing it publicly:
-
-1. **Use a firewall** — only allow trusted IPs
-2. **Run behind a reverse proxy** — use nginx/Apache with authentication
-3. **Add HTTP Basic Auth** (optional enhancement):
-   ```bash
-   pip install Flask-HTTPAuth
-   # Then edit web/app.py to add @auth.login_required decorators
-   ```
-4. **Use VPN or SSH tunneling** — don't expose directly to the internet
-
-**Recommend:** Keep it on an internal network or access via VPN only.
+> **Security Notice:** Keep `config/commands.yml` minimal. Never add commands that could exfiltrate data or modify system state without operator confirmation.

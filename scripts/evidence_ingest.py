@@ -10,9 +10,11 @@ import os
 import shutil
 import sqlite3
 import datetime
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
 EVIDENCE_DIR = REPO_ROOT / "evidence"
 DB_PATH = REPO_ROOT / "data" / "integrity_ledger.db"
 os.makedirs(EVIDENCE_DIR, exist_ok=True)
