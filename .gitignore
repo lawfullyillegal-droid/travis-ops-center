@@ -39,3 +39,9 @@ evidence_notes/
 *.tar.gz
 *.7z
 backup-*
+# CASEOPS sensitive/runtime files
+secrets/
+credentials/
+*.pyc
+drafts/
+manifests/

@@ -1,0 +1,60 @@
+name: Evidence Record Verification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-integrity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile integrity tools
+        run: |
+          python -m py_compile \
+            scripts/ingest_evidence.py \
+            scripts/verify_record.py \
+            scripts/generate_manifest.py
+
+      - name: Create test evidence
+        run: |
+          printf '%s\n' \
+            'CASEOPS CI evidence integrity test record' \
+            > /tmp/caseops-integrity-test.txt
+
+      - name: Ingest test record
+        run: |
+          python scripts/ingest_evidence.py \
+            /tmp/caseops-integrity-test.txt \
+            --operator github-actions \
+            --notes "Automated integrity test" \
+            --manifest-out manifests/ci-test-record.json
+
+      - name: Verify test record
+        run: |
+          python scripts/verify_record.py \
+            manifests/ci-test-record.json
+
+      - name: Generate aggregate SHA-256 manifest
+        run: |
+          python scripts/generate_manifest.py \
+            manifests \
+            --output manifests/SHA256SUMS.txt
+
+      - name: Display checksum manifest
+        run: |
+          cat manifests/SHA256SUMS.txt
