@@ -1,7 +1,41 @@
+# Python
 .venv/
-*.pyc
+venv/
 __pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS/editor
 .DS_Store
+.idea/
+.vscode/
+
+# Secrets / local runtime configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Evidence/runtime data: keep out of source control by default
 data/
 evidence/
-logs/audit.log
+meta_logs/
+logs/
+evidence_notes/
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Generated archives / backups
+*.zip
+*.tar
+*.tar.gz
+*.7z
+backup-*

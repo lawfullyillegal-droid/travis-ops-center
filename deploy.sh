@@ -1,93 +1,82 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Production deployment script for travis-ops-center
-# Usage: bash deploy.sh [domain] [email]
-
 echo "========================================="
-echo "Travis Ops Center — Production Deploy"
+echo "Travis Ops Center — Hardened Deploy"
 echo "========================================="
 
-DOMAIN="${1:-ops-center.local}"
-EMAIL="${2:-admin@example.com}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 cd "$REPO_DIR"
 
-# Step 1: Create .env if it doesn't exist
 if [ ! -f .env ]; then
-    echo "✓ Creating .env from template..."
-    cp .env.example .env
-    echo "  ⚠ EDIT .env and set AUTH_USER and AUTH_PASS before continuing!"
-    echo "  Then run: bash deploy.sh $DOMAIN $EMAIL"
-    exit 0
+  cp .env.example .env
+  echo "Created .env."
+  echo "Set AUTH_USER and AUTH_PASS in .env, then run this command again."
+  exit 0
 fi
 
-# Step 2: Check for Docker
+env_value() {
+  local key="$1" value
+  value="$(grep -E "^${key}=" .env | tail -n1 | cut -d= -f2- || true)"
+  value="${value%\"}"; value="${value#\"}"
+  value="${value%\'}"; value="${value#\'}"
+  printf '%s' "$value"
+}
+
+AUTH_USER_VALUE="$(env_value AUTH_USER)"
+AUTH_PASS_VALUE="$(env_value AUTH_PASS)"
+SERVER_PORT_VALUE="$(env_value SERVER_PORT)"
+PUBLIC_BIND_HOST_VALUE="$(env_value PUBLIC_BIND_HOST)"
+
+SERVER_PORT_VALUE="${SERVER_PORT_VALUE:-8080}"
+PUBLIC_BIND_HOST_VALUE="${PUBLIC_BIND_HOST_VALUE:-127.0.0.1}"
+
+if [ -z "$AUTH_USER_VALUE" ] || [ -z "$AUTH_PASS_VALUE" ]; then
+  echo "ERROR: Docker/server deployment requires AUTH_USER and AUTH_PASS in .env."
+  exit 1
+fi
+
+case "$AUTH_PASS_VALUE" in
+  password|changeme|change_me|change_me_to_a_strong_password)
+    echo "ERROR: Replace the placeholder AUTH_PASS before deployment."
+    exit 1
+    ;;
+esac
+
 if ! command -v docker >/dev/null 2>&1; then
-    echo "✗ Docker not found. Install Docker and try again."
-    exit 1
+  echo "ERROR: Docker is not installed."
+  exit 1
 fi
 
-if ! command -v docker-compose >/dev/null 2>&1; then
-    echo "✗ docker-compose not found. Install Docker Compose and try again."
-    exit 1
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE=(docker-compose)
+else
+  echo "ERROR: Docker Compose is not available."
+  exit 1
 fi
 
-echo "✓ Docker and docker-compose found"
+"${COMPOSE[@]}" --env-file .env up -d --build
 
-# Step 3: Load .env
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+HEALTH_HOST="$PUBLIC_BIND_HOST_VALUE"
+if [ "$HEALTH_HOST" = "0.0.0.0" ] || [ "$HEALTH_HOST" = "::" ]; then
+  HEALTH_HOST="127.0.0.1"
 fi
 
-# Step 4: Build and start
-echo "✓ Building Docker image..."
-docker-compose build
-
-echo "✓ Starting container..."
-docker-compose up -d
-
-# Step 5: Wait for service
-echo "⏳ Waiting for service to be ready..."
-for i in {1..30}; do
-    if curl -s http://localhost:${SERVER_PORT:-8080} >/dev/null 2>&1; then
-        echo "✓ Service is running"
-        break
+if command -v curl >/dev/null 2>&1; then
+  for _ in $(seq 1 20); do
+    if curl -fsS "http://${HEALTH_HOST}:${SERVER_PORT_VALUE}/health" >/dev/null 2>&1; then
+      echo "Service healthy: http://${PUBLIC_BIND_HOST_VALUE}:${SERVER_PORT_VALUE}"
+      break
     fi
     sleep 1
-done
+  done
+fi
 
-# Step 6: Output deployment info
-echo ""
-echo "========================================="
-echo "Deployment Complete!"
-echo "========================================="
-echo ""
-echo "Web UI: http://localhost:${SERVER_PORT:-8080}"
-echo ""
-echo "Authentication:"
-echo "  Username: ${AUTH_USER:-admin}"
-echo "  Password: (from .env AUTH_PASS)"
-echo ""
-echo "Next steps:"
-echo ""
-echo "1. Test locally:"
-echo "   curl -u ${AUTH_USER:-admin}:PASSWORD http://localhost:${SERVER_PORT:-8080}"
-echo ""
-echo "2. If using a domain + HTTPS:"
-echo "   - Point DNS to this server"
-echo "   - Run: certbot certonly -d $DOMAIN"
-echo "   - Add nginx config with SSL (see README.md)"
-echo ""
-echo "3. Monitor logs:"
-echo "   docker-compose logs -f"
-echo ""
-echo "4. To stop:"
-echo "   docker-compose down"
-echo ""
-echo "5. To ingest evidence from Termux:"
-echo "   git clone $REPO_DIR"
-echo "   python3 scripts/evidence_ingest.py /path/to/file --notes 'description'"
-echo "   ./scripts/sync_vault.sh 'Added evidence'"
-echo ""
+echo
+echo "Deployment started."
+echo "Bind: ${PUBLIC_BIND_HOST_VALUE}:${SERVER_PORT_VALUE}"
+echo "User: ${AUTH_USER_VALUE}"
+echo "Logs: ${COMPOSE[*]} logs -f"
+echo "Stop: ${COMPOSE[*]} down"

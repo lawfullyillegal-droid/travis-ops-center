@@ -1,25 +1,28 @@
-version: '3.8'
-
 services:
   ops-center:
     build: .
     container_name: travis-ops-center
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "${PUBLIC_BIND_HOST:-127.0.0.1}:${SERVER_PORT:-8080}:8080"
     volumes:
       - ./data:/app/data
       - ./evidence:/app/evidence
       - ./logs:/app/logs
       - ./evidence_notes:/app/evidence_notes
     environment:
-      - FLASK_ENV=${FLASK_ENV:-production}
-      - PYTHONUNBUFFERED=1
-      - AUTH_USER=${AUTH_USER}
-      - AUTH_PASS=${AUTH_PASS}
+      FLASK_ENV: "${FLASK_ENV:-production}"
+      PYTHONUNBUFFERED: "1"
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "8080"
+      AUTH_USER: "${AUTH_USER:?Set AUTH_USER in .env}"
+      AUTH_PASS: "${AUTH_PASS:?Set AUTH_PASS in .env}"
+      ALLOW_INSECURE_NO_AUTH: "0"
     restart: unless-stopped
-    networks:
-      - ops-net
-
-networks:
-  ops-net:
-    driver: bridge
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
