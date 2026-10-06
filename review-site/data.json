@@ -1,0 +1,171 @@
+{
+  "generated_at": "2026-09-30",
+  "project": "CaseOps // Kingman Evidence & Identifier Intelligence",
+  "evidence": {
+    "source_paths_processed": 25,
+    "distinct_sha256_streams": 20,
+    "hash_failures": 0,
+    "duplicate_paths": 5,
+    "note": "Hashes establish byte integrity of the intake copies; they do not authenticate the issuing agency or prove a legal conclusion."
+  },
+  "cases": [
+    {
+      "id": "J0801TR2024000143",
+      "label": "2024 matter",
+      "status": "Historical / source case"
+    },
+    {
+      "id": "J0801TR2026000437",
+      "label": "2026 matter",
+      "status": "Pending / not guilty entered"
+    }
+  ],
+  "mvd_actions": [
+    {
+      "id": "36554929",
+      "authority": "A.R.S. \u00a7 28-3308",
+      "period": "2024-06-21 \u2192 2024-07-03",
+      "status": "Completed",
+      "note": "Certified MVR"
+    },
+    {
+      "id": "36554930",
+      "authority": "A.R.S. \u00a7 28-3308",
+      "period": "June 2024",
+      "status": "Historical discrepancy",
+      "note": "Contemporaneous notice identifier differs from certified MVR identifier"
+    },
+    {
+      "id": "36914668",
+      "authority": "A.R.S. \u00a7 28-4135(E)",
+      "period": "2024-09-10 \u2192 2024-12-10",
+      "status": "Completed",
+      "note": "Financial responsibility suspension"
+    },
+    {
+      "id": "37834912",
+      "authority": "A.R.S. \u00a7 28-4087",
+      "period": "Effective 2025-05-22",
+      "status": "Active in 2026 record",
+      "note": "Failed to maintain SR22"
+    },
+    {
+      "id": "37834913",
+      "authority": "A.R.S. \u00a7 28-3002",
+      "period": "Effective 2025-05-22",
+      "status": "Separate action",
+      "note": "Do not merge with 37834912"
+    }
+  ],
+  "verified_edges": [
+    {
+      "from": "CIK 0001677703",
+      "relation": "identifies SEC filer",
+      "to": "CONDUENT Inc",
+      "scope": "Corporate identifier"
+    },
+    {
+      "from": "LEI 549300SFJ2D2CYY6CQ11",
+      "relation": "identifies legal entity",
+      "to": "CONDUENT INCORPORATED",
+      "scope": "Corporate identifier"
+    },
+    {
+      "from": "LEI 549300SFJ2D2CYY6CQ11",
+      "relation": "maps to",
+      "to": "ISIN US2067871036",
+      "scope": "GLEIF mapping"
+    },
+    {
+      "from": "LEI 54930026CNAIP718XD30",
+      "relation": "identifies legal entity",
+      "to": "CONDUENT BUSINESS SERVICES, LLC",
+      "scope": "Corporate identifier"
+    },
+    {
+      "from": "Conduent State & Local Solutions, Inc.",
+      "relation": "wholly owned subsidiary of",
+      "to": "Conduent Business Services, LLC",
+      "scope": "Corporate structure"
+    },
+    {
+      "from": "Conduent Business Services, LLC",
+      "relation": "wholly owned subsidiary of",
+      "to": "Conduent Incorporated",
+      "scope": "Corporate structure"
+    },
+    {
+      "from": "Arizona FARE Program",
+      "relation": "contracted with",
+      "to": "Conduent State & Local Solutions, Inc.",
+      "scope": "Historical program contract"
+    },
+    {
+      "from": "Arizona FARE Program",
+      "relation": "collection/payment services provided by",
+      "to": "Conduent corporate group",
+      "scope": "Program-level relationship"
+    },
+    {
+      "from": "FARE Delinquency Fee",
+      "relation": "historical fee share",
+      "to": "$10.50 \u2192 Conduent",
+      "scope": "2018 historical fee structure"
+    },
+    {
+      "from": "FARE Delinquency Fee",
+      "relation": "historical fee share",
+      "to": "$38.50 \u2192 Arizona AOC",
+      "scope": "2018 historical fee structure"
+    }
+  ],
+  "timeline": [
+    {
+      "date": "2024-06-21 \u2192 2024-07-03",
+      "event": "Withdrawal 36554929 under \u00a7 28-3308 recorded and completed."
+    },
+    {
+      "date": "2024-08-23 / 2024-08-26",
+      "event": "2024 judgment/disposition records civil traffic responsibility; exact count-by-count reconciliation remains important."
+    },
+    {
+      "date": "2024-09-10 \u2192 2024-12-10",
+      "event": "Withdrawal 36914668 under \u00a7 28-4135(E) recorded as completed."
+    },
+    {
+      "date": "2025-05-22",
+      "event": "Withdrawal 37834912 under \u00a7 28-4087 becomes effective; separate 37834913 action also appears."
+    },
+    {
+      "date": "2025-09-24",
+      "event": "TTEAP incident appears under incidents without withdrawals; it should not be used alone to explain the active driver-license suspension."
+    },
+    {
+      "date": "2026-08-28",
+      "event": "Traffic complaint alleges \u00a7 28-3473(A), driving while license suspended."
+    },
+    {
+      "date": "2026-09-21",
+      "event": "Certified MVR shows noncommercial privilege not eligible and earliest eligibility 2027-09-10."
+    },
+    {
+      "date": "2026-09-29",
+      "event": "Court record indicates emailed motion was not treated as properly filed; later posture moved forward with a not-guilty plea and release conditions."
+    }
+  ],
+  "open_questions": [
+    "Which exact withdrawal and statutory authority does the State rely on for the 2026 charge?",
+    "What proof of mailing/service supports the May 2025 notices, and what evidence bears on actual or constructive knowledge before the 2026 stop?",
+    "What were the precise final dispositions of every count in J0801TR2024000143, and what abstract/transmission was sent to MVD?",
+    "Why does the MVR show SR22 proof satisfied while withdrawal 37834912 remains active through 2027, and what exact reinstatement conditions remain?",
+    "What FARE referral, delinquency fee, special-collections fee, payment, or remittance was posted specifically to J0801TR2024000143?",
+    "Which exact Conduent legal entity received any fee or remittance tied to the user's specific account, if any?"
+  ],
+  "limits": [
+    "The verified Conduent corporate identifiers do not prove that any individual court debt was securitized.",
+    "Historical FARE fee allocation ($10.50 Conduent / $38.50 AOC) does not establish the same split applied in 2025\u20132026.",
+    "Fidelity/FMR searches produced name-matching candidates but no verified bridge to the court matter, FARE account, or payments.",
+    "A public-company parent, LEI, CIK, or ISIN does not by itself prove that a specific court payment entered securities markets.",
+    "The current evidentiary goal is transaction-level proof: case ledger \u2192 FARE referral/payment \u2192 vendor/remittance \u2192 exact legal entity."
+  ]
+}

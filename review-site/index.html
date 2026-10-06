@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CaseOps // Kingman Review</title>
+<meta name="description" content="CaseOps evidence and identifier intelligence review dashboard">
+<style>
+:root{
+  --bg:#071018;--panel:#0c1823;--panel2:#102333;--line:#20374a;--text:#e8f0f7;
+  --muted:#9bb0c2;--accent:#69d6ff;--ok:#52e0a4;--warn:#ffd166;--danger:#ff7d8d;
+  --shadow:0 18px 60px rgba(0,0,0,.28)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at top right,#11304a 0,#071018 38%),var(--bg);color:var(--text);
+font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:auto;padding:0 22px 70px}
+.topbar{position:sticky;top:0;z-index:10;background:rgba(7,16,24,.88);backdrop-filter:blur(14px);
+border-bottom:1px solid rgba(255,255,255,.07)}
+.topinner{max-width:1180px;margin:auto;padding:14px 22px;display:flex;align-items:center;gap:18px}
+.brand{font-weight:800;letter-spacing:.08em}.brand span{color:var(--accent)}
+nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+nav a:hover{color:var(--text)}
+.hero{padding:72px 0 34px;display:grid;grid-template-columns:1.45fr .8fr;gap:28px;align-items:end}
+.eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:.75rem;color:var(--accent);font-weight:700}
+h1{font-size:clamp(2.3rem,5vw,4.8rem);line-height:.98;margin:14px 0 20px;letter-spacing:-.04em}
+.hero p{font-size:1.05rem;color:var(--muted);max-width:780px;line-height:1.65}
+.snapshot{background:linear-gradient(180deg,rgba(105,214,255,.12),rgba(255,255,255,.025));border:1px solid var(--line);
+border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+.metric{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.metric:last-child{border-bottom:0}.metric strong{font-size:1.15rem}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;font-size:.78rem;font-weight:700;border:1px solid}
+.ok{color:var(--ok);border-color:rgba(82,224,164,.35);background:rgba(82,224,164,.08)}
+.warn{color:var(--warn);border-color:rgba(255,209,102,.35);background:rgba(255,209,102,.08)}
+.info{color:var(--accent);border-color:rgba(105,214,255,.35);background:rgba(105,214,255,.08)}
+section{padding:30px 0}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:16px}
+h2{font-size:1.65rem;margin:0;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:.93rem;max-width:700px;line-height:1.55}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:linear-gradient(180deg,var(--panel),rgba(12,24,35,.78));border:1px solid var(--line);border-radius:16px;padding:18px;
+box-shadow:0 12px 34px rgba(0,0,0,.16)}
+.card h3{margin:0 0 8px;font-size:1rem}.card p{color:var(--muted);margin:0;line-height:1.5;font-size:.92rem}
+.kpi{font-size:2rem;font-weight:800;letter-spacing:-.04em;margin-top:5px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{padding:13px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);font-size:.88rem;vertical-align:top}
+th{color:#c5d6e4;background:rgba(255,255,255,.025);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}
+td{color:#dfe8ef}.muted{color:var(--muted)}
+.flow{display:flex;flex-direction:column;gap:10px}
+.node{padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--panel2)}
+.node strong{display:block;margin-bottom:4px}.edge{color:var(--muted);font-size:.86rem;padding-left:18px}
+.edge::before{content:"↓";color:var(--accent);margin-right:8px}
+.timeline{border-left:1px solid var(--line);margin-left:6px}
+.titem{position:relative;padding:0 0 22px 24px}.titem::before{content:"";position:absolute;left:-5px;top:4px;width:9px;height:9px;
+border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(105,214,255,.1)}
+.titem .date{font-size:.77rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.titem .event{margin-top:5px;color:#dbe5ec;line-height:1.5}
+.callout{border:1px solid rgba(255,209,102,.25);background:rgba(255,209,102,.055);border-radius:16px;padding:18px;line-height:1.6}
+.callout strong{color:var(--warn)}
+ul.clean{margin:0;padding-left:19px}ul.clean li{margin:9px 0;color:#dce6ed;line-height:1.5}
+.footer{margin-top:38px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem;line-height:1.6}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#08131d;border:1px solid #1e3447;padding:2px 6px;border-radius:6px;color:#c9f0ff}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.topinner{align-items:flex-start;flex-direction:column}nav{margin:0}.wrap{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topinner">
+    <div class="brand">CASE<span>OPS</span> // KINGMAN</div>
+    <nav>
+      <a href="#status">Status</a><a href="#timeline">Timeline</a><a href="#graph">Verified Graph</a>
+      <a href="#money">Money Flow</a><a href="#questions">Open Questions</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Evidence Integrity + Identifier Intelligence</div>
+      <h1>CaseOps Review Dashboard</h1>
+      <p>A professional review of the Kingman matters, evidence integrity, MVD action history, verified Conduent identifiers, FARE program relationships, and the remaining transaction-level proof needed to complete a defensible money-flow trace.</p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:18px">
+        <span class="badge ok">● 0 hash failures</span>
+        <span class="badge info">20 evidence records</span>
+        <span class="badge warn">Transaction bridge still open</span>
+      </div>
+    </div>
+    <div class="snapshot">
+      <div class="metric"><span class="muted">Evidence records</span><strong>20</strong></div>
+      <div class="metric"><span class="muted">Source paths processed</span><strong>25</strong></div>
+      <div class="metric"><span class="muted">Verified corporate/program edges</span><strong>10+</strong></div>
+      <div class="metric"><span class="muted">Primary unresolved link</span><strong>Case → FARE payment</strong></div>
+    </div>
+  </header>
+
+  <section id="status">
+    <div class="section-head"><div><h2>Current status</h2><div class="sub">What has been established, and what remains separate.</div></div></div>
+    <div class="grid">
+      <div class="card"><h3>Evidence integrity</h3><div class="kpi">20 / 20</div><p>Stored evidence records rehashed successfully. Five duplicate source paths were identified separately.</p></div>
+      <div class="card"><h3>Identifier hygiene</h3><div class="kpi">Fixed</div><p>MVD and court identifiers now remain in the local/admin namespace instead of being falsely treated as SEC CIKs.</p></div>
+      <div class="card"><h3>Corporate resolution</h3><div class="kpi">Verified</div><p>Conduent Incorporated resolves across CIK, LEI and ISIN, with subsidiary relationships preserved separately.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>Case and MVD action map</h2><div class="sub">The current evidence distinguishes completed historical withdrawals from the later active § 28-4087 action.</div></div></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Identifier</th><th>Authority</th><th>Period</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>36554929</code></td><td>A.R.S. § 28-3308</td><td>2024-06-21 → 2024-07-03</td><td><span class="badge ok">Completed</span></td><td>Certified MVR.</td></tr>
+          <tr><td><code>36554930</code></td><td>A.R.S. § 28-3308</td><td>June 2024</td><td><span class="badge warn">Identifier discrepancy</span></td><td>Contemporaneous notice differs from certified MVR identifier.</td></tr>
+          <tr><td><code>36914668</code></td><td>A.R.S. § 28-4135(E)</td><td>2024-09-10 → 2024-12-10</td><td><span class="badge ok">Completed</span></td><td>Financial-responsibility suspension.</td></tr>
+          <tr><td><code>37834912</code></td><td>A.R.S. § 28-4087</td><td>Effective 2025-05-22</td><td><span class="badge warn">Active in 2026 record</span></td><td>Failed to maintain SR22.</td></tr>
+          <tr><td><code>37834913</code></td><td>A.R.S. § 28-3002</td><td>Effective 2025-05-22</td><td><span class="badge info">Separate action</span></td><td>Do not merge with 37834912.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="timeline">
+    <div class="section-head"><div><h2>Source-linked chronology</h2><div class="sub">Condensed review timeline based on the evidence inventory and current CaseOps analysis.</div></div></div>
+    <div class="card">
+      <div class="timeline">
+        <div class="titem"><div class="date">2024-06-21 → 2024-07-03</div><div class="event">Withdrawal 36554929 under § 28-3308 recorded and completed.</div></div>
+        <div class="titem"><div class="date">2024-08-23 / 2024-08-26</div><div class="event">2024 judgment/disposition records civil traffic responsibility; count-by-count reconciliation remains important.</div></div>
+        <div class="titem"><div class="date">2024-09-10 → 2024-12-10</div><div class="event">Withdrawal 36914668 under § 28-4135(E) recorded as completed.</div></div>
+        <div class="titem"><div class="date">2025-05-22</div><div class="event">Withdrawal 37834912 under § 28-4087 becomes effective; separate 37834913 action also appears.</div></div>
+        <div class="titem"><div class="date">2025-09-24</div><div class="event">TTEAP incident appears under incidents without withdrawals; it should not be used alone to explain the active driver-license suspension.</div></div>
+        <div class="titem"><div class="date">2026-08-28</div><div class="event">Traffic complaint alleges § 28-3473(A), driving while license suspended.</div></div>
+        <div class="titem"><div class="date">2026-09-21</div><div class="event">Certified MVR shows noncommercial privilege not eligible and earliest eligibility 2027-09-10.</div></div>
+        <div class="titem"><div class="date">2026-09-29</div><div class="event">Court record indicates emailed motion was not treated as properly filed; later posture moved forward with a not-guilty plea and release conditions.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="graph">
+    <div class="section-head"><div><h2>Verified identifier graph</h2><div class="sub">Only relationships currently treated as verified are shown here. Broad fuzzy-name search noise is intentionally excluded.</div></div></div>
+    <div class="grid">
+      <div class="card flow">
+        <div class="node"><strong>Conduent Incorporated</strong><span class="muted">Public parent / SEC filer</span></div>
+        <div class="edge">CIK 0001677703</div>
+        <div class="edge">LEI 549300SFJ2D2CYY6CQ11</div>
+        <div class="edge">ISIN US2067871036</div>
+      </div>
+      <div class="card flow">
+        <div class="node"><strong>Conduent State & Local Solutions, Inc.</strong><span class="muted">Historical Arizona FARE contractor</span></div>
+        <div class="edge">wholly owned subsidiary of</div>
+        <div class="node"><strong>Conduent Business Services, LLC</strong><span class="muted">LEI 54930026CNAIP718XD30</span></div>
+        <div class="edge">wholly owned subsidiary of</div>
+        <div class="node"><strong>Conduent Incorporated</strong></div>
+      </div>
+      <div class="card flow">
+        <div class="node"><strong>Arizona FARE Program</strong></div>
+        <div class="edge">contracted with</div>
+        <div class="node"><strong>Conduent State & Local Solutions, Inc.</strong></div>
+        <div class="edge">historical fee allocation documented</div>
+        <div class="node"><strong>$10.50 Conduent / $38.50 AOC</strong><span class="muted">2018 historical structure only</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="money">
+    <div class="section-head"><div><h2>Money-flow position</h2><div class="sub">What the current evidence can and cannot support.</div></div></div>
+    <div class="card">
+      <div class="flow">
+        <div class="node"><strong>J0801TR2024000143</strong><span class="muted">Specific case obligation</span></div>
+        <div class="edge">NEEDS transaction-level proof</div>
+        <div class="node"><strong>FARE referral / fee / payment record</strong><span class="muted">Missing decisive bridge</span></div>
+        <div class="edge">would identify actual recipient / remittance</div>
+        <div class="node"><strong>Exact Conduent legal entity</strong><span class="muted">Program-level contractor relationship is known; case-specific receipt is not yet proven.</span></div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:14px">
+      <strong>Key evidentiary limit:</strong> A verified LEI, CIK, ISIN, public-company parent, or historical FARE fee structure does not prove that a specific court obligation was securitized or that a specific payment entered securities markets. The required bridge is still the case-level ledger/referral/payment/remittance record.
+    </div>
+  </section>
+
+  <section id="questions">
+    <div class="section-head"><div><h2>Priority unanswered questions</h2><div class="sub">These are the highest-value records questions for the next phase.</div></div></div>
+    <div class="card">
+      <ul class="clean">
+        <li>Which exact withdrawal and statutory authority does the State rely on for the 2026 charge?</li>
+        <li>What proof of mailing/service supports the May 2025 notices, and what evidence bears on knowledge before the 2026 stop?</li>
+        <li>What were the precise final dispositions of every count in J0801TR2024000143, and what abstract/transmission was sent to MVD?</li>
+        <li>Why does the MVR show SR22 proof satisfied while withdrawal 37834912 remains active through 2027, and what exact reinstatement conditions remain?</li>
+        <li>What FARE referral, delinquency fee, special-collections fee, payment, or remittance was posted specifically to J0801TR2024000143?</li>
+        <li>Which exact Conduent legal entity received any fee or remittance tied to the specific account, if any?</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>Evidence discipline</h2><div class="sub">The dashboard intentionally separates verified facts from historical program facts and unproven hypotheses.</div></div></div>
+    <div class="grid">
+      <div class="card"><h3><span class="badge ok">VERIFIED</span></h3><p>Source-backed identifier mappings, corporate structure, program relationships, evidence hashes and known record contents.</p></div>
+      <div class="card"><h3><span class="badge warn">HISTORICAL</span></h3><p>2018 FARE fee allocation and earlier contract relationships. Useful context, but not automatically current for 2025–2026.</p></div>
+      <div class="card"><h3><span class="badge info">UNPROVEN</span></h3><p>Any direct Fidelity link, case-specific Conduent receipt, securities-market use of a court debt, or transaction chain not backed by records.</p></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    CaseOps review dashboard. Evidence inventory / issue map only; not a court filing or legal conclusion. 
+    Generated as a static local review site so the underlying facts can be inspected without changing the evidence repository.
+  </div>
+</div>
+</body>
+</html>

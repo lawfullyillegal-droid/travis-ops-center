@@ -45,3 +45,4 @@ credentials/
 *.pyc
 drafts/
 manifests/
+web/static/*.backup.*
