@@ -32,6 +32,7 @@
     <button data-panel="dashboard" class="active">Dashboard</button>
     <button data-panel="evidence">Evidence Ledger</button>
     <button data-panel="cases">Case Files</button>
+    <button data-panel="intelligence">Identifier Intel</button>
     <button data-panel="operations">Operations Feed</button>
     <button data-panel="terminal">Command Center</button>
     <button data-panel="support">Support Mission</button>
@@ -90,14 +91,14 @@
             <div class="sub">SHA256 verified</div>
           </div>
           <div class="stat-card">
-            <div class="label">Audit Entries</div>
+            <div class="label">Identifiers</div>
             <div class="value" id="stat-audit">0</div>
-            <div class="sub">JSONL logged</div>
+            <div class="sub">Intelligence database</div>
           </div>
           <div class="stat-card">
-            <div class="label">Public Notices</div>
+            <div class="label">Verified Links</div>
             <div class="value" id="stat-notices">0</div>
-            <div class="sub">Blockchain timestamped</div>
+            <div class="sub">Evidence-backed relationships</div>
           </div>
         </div>
 
@@ -161,6 +162,75 @@
         </table>
       </div>
 
+
+      <div id="panel-intelligence" class="panel">
+        <div class="section-header">
+          <h2>Identifier Intelligence</h2>
+          <button class="action-btn-sm"
+                  onclick="window.app.loadIntelligence()">
+            Refresh
+          </button>
+        </div>
+
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="label">Stored Identifiers</div>
+            <div class="value" id="intel-identifiers">0</div>
+            <div class="sub">Normalized identifier records</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="label">Entities</div>
+            <div class="value" id="intel-entities">0</div>
+            <div class="sub">Resolved legal entities</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="label">Source Snapshots</div>
+            <div class="value" id="intel-snapshots">0</div>
+            <div class="sub">Preserved source responses</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="label">Database Links</div>
+            <div class="value" id="intel-links">0</div>
+            <div class="sub" id="intel-db-status">Not initialized</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2>Verified Relationships</h2>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>Relationship</th>
+              <th>To</th>
+              <th>Scope</th>
+            </tr>
+          </thead>
+          <tbody id="intel-links-body">
+            <tr>
+              <td colspan="4">Loading intelligence...</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-header">
+          <h2>Open Evidentiary Questions</h2>
+        </div>
+
+        <div id="intel-open-questions" class="feed-list"></div>
+
+        <div class="section-header">
+          <h2>Analysis Guardrails</h2>
+        </div>
+
+        <div id="intel-limits" class="feed-list"></div>
+      </div>
+
       <div id="panel-operations" class="panel">
         <div class="section-header">
           <h2>Operations Feed</h2>
@@ -213,5 +283,6 @@
     </main>
   </div>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='intelligence.js') }}"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 from pathlib import Path
 from secrets import compare_digest
+import json
 import os
 import sqlite3
 
@@ -10,6 +11,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = REPO_ROOT / "data" / "integrity_ledger.db"
 AUDIT_LOG = REPO_ROOT / "logs" / "audit.log"
 EVIDENCE_BASE = REPO_ROOT / "evidence"
+REVIEW_DATA_PATH = REPO_ROOT / "review-site" / "data.json"
+IDENTIFIER_DB_PATH = REPO_ROOT / "data" / "identifier_intel" / "identifier_intel.db"
 
 SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1").strip() or "127.0.0.1"
 SERVER_PORT = int(os.getenv("SERVER_PORT", "8080"))
@@ -81,6 +84,135 @@ def ledger_api():
             "FROM ledger ORDER BY ts DESC"
         ).fetchall()
         return jsonify([dict(row) for row in rows])
+    finally:
+        conn.close()
+
+
+
+@app.route("/api/review-data")
+@auth.login_required
+def review_data_api():
+    """Return the curated CaseOps review dataset."""
+    if not REVIEW_DATA_PATH.is_file():
+        return jsonify({
+            "cases": [],
+            "timeline": [],
+            "verified_edges": [],
+            "open_questions": [],
+            "limits": [],
+            "error": "Review dataset not initialized",
+        })
+
+    try:
+        payload = json.loads(
+            REVIEW_DATA_PATH.read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError) as exc:
+        return jsonify({
+            "error": "Unable to read review dataset",
+            "detail": str(exc),
+        }), 500
+
+    return jsonify(payload)
+
+
+@app.route("/api/identifier-summary")
+@auth.login_required
+def identifier_summary_api():
+    """Read-only summary of the identifier intelligence database."""
+
+    empty = {
+        "status": "not_initialized",
+        "counts": {
+            "identifiers": 0,
+            "entities": 0,
+            "source_snapshots": 0,
+            "links": 0,
+            "anomalies": 0,
+        },
+        "recent_links": [],
+        "recent_anomalies": [],
+    }
+
+    if not IDENTIFIER_DB_PATH.is_file():
+        return jsonify(empty)
+
+    try:
+        conn = sqlite3.connect(
+            f"file:{IDENTIFIER_DB_PATH}?mode=ro",
+            uri=True,
+        )
+        conn.row_factory = sqlite3.Row
+    except sqlite3.Error as exc:
+        return jsonify({
+            **empty,
+            "status": "error",
+            "error": str(exc),
+        }), 500
+
+    try:
+        counts = {}
+
+        for table in (
+            "identifiers",
+            "entities",
+            "source_snapshots",
+            "links",
+            "anomalies",
+        ):
+            counts[table] = conn.execute(
+                f"SELECT COUNT(*) FROM {table}"
+            ).fetchone()[0]
+
+        links = conn.execute(
+            """
+            SELECT
+                id,
+                from_type,
+                from_value,
+                relation,
+                to_type,
+                to_value,
+                status,
+                confidence,
+                evidence_ref,
+                event_date,
+                notes
+            FROM links
+            ORDER BY id DESC
+            LIMIT 50
+            """
+        ).fetchall()
+
+        anomalies = conn.execute(
+            """
+            SELECT
+                id,
+                category,
+                severity,
+                subject,
+                description,
+                created_at
+            FROM anomalies
+            ORDER BY id DESC
+            LIMIT 50
+            """
+        ).fetchall()
+
+        return jsonify({
+            "status": "ready",
+            "counts": counts,
+            "recent_links": [dict(row) for row in links],
+            "recent_anomalies": [dict(row) for row in anomalies],
+        })
+
+    except sqlite3.Error as exc:
+        return jsonify({
+            **empty,
+            "status": "error",
+            "error": str(exc),
+        }), 500
+
     finally:
         conn.close()
 
