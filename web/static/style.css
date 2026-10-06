@@ -577,3 +577,121 @@ a:hover { text-decoration:underline; }
 
   #main-nav { padding-inline:9px; }
 }
+
+/* CASEOPS INTELLIGENCE STATUS + MOBILE CARDS */
+.intel-status-summary,
+.intel-filters {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.status-pill {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:.66rem;
+  font-weight:900;
+  letter-spacing:.07em;
+  white-space:nowrap;
+}
+
+.status-verified {
+  color:var(--green);
+  border:1px solid rgba(70,245,154,.35);
+  background:rgba(70,245,154,.07);
+}
+
+.status-candidate {
+  color:var(--amber);
+  border:1px solid rgba(255,200,87,.35);
+  background:rgba(255,200,87,.07);
+}
+
+.status-unresolved {
+  color:var(--red);
+  border:1px solid rgba(255,85,119,.35);
+  background:rgba(255,85,119,.07);
+}
+
+.intel-filter {
+  cursor:pointer;
+  border:1px solid var(--line);
+  border-radius:7px;
+  padding:7px 11px;
+  color:#849aa7;
+  background:rgba(255,255,255,.025);
+  font-weight:800;
+}
+
+.intel-filter.active,
+.intel-filter:hover {
+  color:var(--cyan);
+  border-color:var(--line2);
+  background:rgba(66,232,255,.08);
+}
+
+.intel-basis {
+  margin:0 0 14px;
+  color:#718a97;
+  font-size:.72rem;
+  line-height:1.6;
+}
+
+@media(max-width:720px) {
+  .intel-table {
+    display:block;
+    overflow:visible;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+  }
+
+  .intel-table thead {
+    display:none;
+  }
+
+  .intel-table tbody,
+  .intel-table tr,
+  .intel-table td {
+    display:block;
+    width:100%;
+  }
+
+  .intel-table tr {
+    margin-bottom:12px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:linear-gradient(
+      145deg,
+      rgba(14,28,40,.96),
+      rgba(5,12,18,.96)
+    );
+    box-shadow:var(--shadow);
+  }
+
+  .intel-table td {
+    display:grid;
+    grid-template-columns:90px minmax(0,1fr);
+    gap:10px;
+    padding:11px 13px;
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+
+  .intel-table td:last-child {
+    border-bottom:0;
+  }
+
+  .intel-table td::before {
+    content:attr(data-label);
+    color:#63808e;
+    font-size:.61rem;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+}

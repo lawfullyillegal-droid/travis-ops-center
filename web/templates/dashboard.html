@@ -199,21 +199,53 @@
         </div>
 
         <div class="section-header">
-          <h2>Verified Relationships</h2>
+          <h2>Live Relationship Intelligence</h2>
+          <span class="badge">Live DB</span>
         </div>
 
-        <table class="data-table">
+        <div class="intel-status-summary">
+          <span class="status-pill status-verified">
+            VERIFIED <strong id="intel-count-verified">0</strong>
+          </span>
+          <span class="status-pill status-candidate">
+            CANDIDATE <strong id="intel-count-candidate">0</strong>
+          </span>
+          <span class="status-pill status-unresolved">
+            UNRESOLVED <strong id="intel-count-unresolved">0</strong>
+          </span>
+        </div>
+
+        <div class="intel-filters">
+          <button class="intel-filter active"
+                  data-intel-filter="ALL">All</button>
+          <button class="intel-filter"
+                  data-intel-filter="VERIFIED">Verified</button>
+          <button class="intel-filter"
+                  data-intel-filter="CANDIDATE">Candidate</button>
+          <button class="intel-filter"
+                  data-intel-filter="UNRESOLVED">Unresolved</button>
+        </div>
+
+        <p class="intel-basis">
+          Live relationships from the CaseOps identifier database.
+          Status, confidence, and evidence references describe the
+          evidentiary basis of each recorded link.
+        </p>
+
+        <table class="data-table intel-table">
           <thead>
             <tr>
+              <th>Status</th>
               <th>From</th>
               <th>Relationship</th>
               <th>To</th>
-              <th>Scope</th>
+              <th>Confidence</th>
+              <th>Evidence Basis</th>
             </tr>
           </thead>
           <tbody id="intel-links-body">
             <tr>
-              <td colspan="4">Loading intelligence...</td>
+              <td colspan="6">Loading live intelligence...</td>
             </tr>
           </tbody>
         </table>

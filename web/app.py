@@ -175,6 +175,7 @@ def identifier_summary_api():
                 to_value,
                 status,
                 confidence,
+                source_snapshot_id,
                 evidence_ref,
                 event_date,
                 notes

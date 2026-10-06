@@ -131,6 +131,107 @@
     }
   };
 
+  let intelLinks = [];
+  let intelFilter = 'ALL';
+
+  function intelStatus(value) {
+    const status = String(value || 'UNRESOLVED').trim().toUpperCase();
+    if (status === 'VERIFIED') return 'VERIFIED';
+    if (status === 'CANDIDATE') return 'CANDIDATE';
+    return 'UNRESOLVED';
+  }
+
+  function intelCell(row, label, value) {
+    const cell = document.createElement('td');
+    cell.dataset.label = label;
+    cell.textContent = value ?? '—';
+    row.appendChild(cell);
+    return cell;
+  }
+
+  function renderIntelLinks() {
+    const body = document.getElementById('intel-links-body');
+    if (!body) return;
+
+    body.textContent = '';
+
+    const visible = intelLinks.filter((link) => {
+      return intelFilter === 'ALL' ||
+        intelStatus(link.status) === intelFilter;
+    });
+
+    if (!visible.length) {
+      const row = document.createElement('tr');
+      const cell = intelCell(
+        row,
+        '',
+        'No matching relationship records.'
+      );
+      cell.colSpan = 6;
+      body.appendChild(row);
+      return;
+    }
+
+    visible.forEach((link) => {
+      const row = document.createElement('tr');
+      const status = intelStatus(link.status);
+
+      const statusCell = document.createElement('td');
+      statusCell.dataset.label = 'Status';
+
+      const pill = document.createElement('span');
+      pill.className =
+        `status-pill status-${status.toLowerCase()}`;
+      pill.textContent = status;
+
+      statusCell.appendChild(pill);
+      row.appendChild(statusCell);
+
+      intelCell(
+        row,
+        'From',
+        `${link.from_value || '—'}` +
+        `${link.from_type ? ` (${link.from_type})` : ''}`
+      );
+
+      intelCell(
+        row,
+        'Relationship',
+        String(link.relation || '—').replace(/_/g, ' ')
+      );
+
+      intelCell(
+        row,
+        'To',
+        `${link.to_value || '—'}` +
+        `${link.to_type ? ` (${link.to_type})` : ''}`
+      );
+
+      const confidence = Number(link.confidence);
+
+      intelCell(
+        row,
+        'Confidence',
+        Number.isFinite(confidence)
+          ? `${Math.round(confidence * 100)}%`
+          : '—'
+      );
+
+      intelCell(
+        row,
+        'Evidence',
+        link.evidence_ref ||
+        (link.source_snapshot_id
+          ? `Source snapshot #${link.source_snapshot_id}`
+          : null) ||
+        link.notes ||
+        'No provenance reference recorded'
+      );
+
+      body.appendChild(row);
+    });
+  }
+
   app.loadIntelligence = async function () {
     try {
       const [reviewResponse, intelResponse] = await Promise.all([
@@ -142,15 +243,51 @@
       const intel = await intelResponse.json();
 
       const counts = intel.counts || {};
-      const verifiedEdges = Array.isArray(review.verified_edges)
-        ? review.verified_edges
+      intelLinks = Array.isArray(intel.recent_links)
+        ? intel.recent_links
         : [];
+
+      if (
+        intelLinks.length === 0 &&
+        Array.isArray(review.verified_edges)
+      ) {
+        intelLinks = review.verified_edges.map((edge) => ({
+          from_type: 'CURATED',
+          from_value: edge.from,
+          relation: edge.relation,
+          to_type: 'CURATED',
+          to_value: edge.to,
+          status: 'VERIFIED',
+          confidence: 1,
+          evidence_ref: edge.scope
+        }));
+      }
+
+      const statusCounts = {
+        VERIFIED: 0,
+        CANDIDATE: 0,
+        UNRESOLVED: 0
+      };
+
+      const entities = new Set();
+
+      intelLinks.forEach((link) => {
+        statusCounts[intelStatus(link.status)] += 1;
+
+        if (String(link.from_type || '' ).toUpperCase() === 'ENTITY') {
+          entities.add(link.from_value);
+        }
+
+        if (String(link.to_type || '' ).toUpperCase() === 'ENTITY') {
+          entities.add(link.to_value);
+        }
+      });
 
       document.getElementById('intel-identifiers').textContent =
         counts.identifiers || 0;
 
       document.getElementById('intel-entities').textContent =
-        counts.entities || 0;
+        entities.size;
 
       document.getElementById('intel-snapshots').textContent =
         counts.source_snapshots || 0;
@@ -168,30 +305,18 @@
         counts.identifiers || 0;
 
       document.getElementById('stat-notices').textContent =
-        verifiedEdges.length;
+        statusCounts.VERIFIED;
 
-      const body = document.getElementById('intel-links-body');
-      body.textContent = '';
+      document.getElementById('intel-count-verified').textContent =
+        statusCounts.VERIFIED;
 
-      if (verifiedEdges.length === 0) {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.colSpan = 4;
-        cell.textContent = 'No verified relationships recorded.';
-        row.appendChild(cell);
-        body.appendChild(row);
-      } else {
-        verifiedEdges.forEach((edge) => {
-          const row = document.createElement('tr');
+      document.getElementById('intel-count-candidate').textContent =
+        statusCounts.CANDIDATE;
 
-          addCell(row, edge.from);
-          addCell(row, edge.relation);
-          addCell(row, edge.to);
-          addCell(row, edge.scope);
+      document.getElementById('intel-count-unresolved').textContent =
+        statusCounts.UNRESOLVED;
 
-          body.appendChild(row);
-        });
-      }
+      renderIntelLinks();
 
       renderMessages(
         'intel-open-questions',
@@ -212,6 +337,19 @@
       if (status) status.textContent = 'Intelligence API unavailable';
     }
   };
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-intel-filter]');
+    if (!button) return;
+
+    intelFilter = button.dataset.intelFilter || 'ALL';
+
+    document.querySelectorAll('[data-intel-filter]').forEach((item) => {
+      item.classList.toggle('active', item === button);
+    });
+
+    renderIntelLinks();
+  });
 
   const originalInit = app.init.bind(app);
 
