@@ -695,3 +695,125 @@ a:hover { text-decoration:underline; }
     text-transform:uppercase;
   }
 }
+
+
+/* CONDUENT / FARE EVIDENCE TRACK */
+.conduent-status-grid,
+.record-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:22px;
+}
+
+.conduent-status-card,
+.record-card,
+.evidence-caution {
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(14,28,40,.96),rgba(5,12,18,.96));
+  box-shadow:var(--shadow);
+  padding:16px;
+}
+
+.conduent-status-card.verified { border-color:rgba(70,245,154,.28); }
+.conduent-status-card.unresolved { border-color:rgba(255,85,119,.28); }
+
+.conduent-status-card .label {
+  color:#78909d;
+  font-size:.65rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.value-small {
+  margin:6px 0 8px;
+  color:var(--cyan);
+  font-size:1rem;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+
+.conduent-status-card p,
+.record-card p,
+.evidence-caution {
+  color:#91a6b2;
+  font-size:.73rem;
+  line-height:1.65;
+}
+
+.evidence-chain {
+  display:flex;
+  align-items:stretch;
+  gap:8px;
+  margin:4px 0 24px;
+  overflow-x:auto;
+  padding-bottom:6px;
+}
+
+.chain-node {
+  min-width:160px;
+  flex:1 0 160px;
+  border:1px solid var(--line2);
+  border-radius:12px;
+  padding:14px;
+  background:rgba(66,232,255,.04);
+}
+
+.chain-node strong {
+  display:block;
+  color:#c9f7ff;
+  font-size:.76rem;
+  margin-bottom:5px;
+}
+
+.chain-node span {
+  color:#78909d;
+  font-size:.67rem;
+  line-height:1.45;
+}
+
+.chain-arrow {
+  align-self:center;
+  color:var(--cyan);
+  font-weight:900;
+}
+
+.record-card strong {
+  display:block;
+  color:#c8f3fa;
+  margin-bottom:5px;
+  font-size:.76rem;
+}
+
+.source-list {
+  display:grid;
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.source-list a {
+  display:block;
+  padding:11px 13px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:rgba(66,232,255,.025);
+  font-size:.72rem;
+}
+
+.evidence-caution {
+  margin-top:14px;
+  border-color:rgba(255,200,87,.32);
+  background:rgba(255,200,87,.045);
+}
+
+.evidence-caution strong { color:var(--amber); }
+
+.conduent-table code,
+.record-card code { color:#8df4ff; }
+
+@media(max-width:900px) {
+  .conduent-status-grid,
+  .record-grid { grid-template-columns:1fr; }
+}

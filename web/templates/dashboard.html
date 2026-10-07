@@ -33,6 +33,7 @@
     <button data-panel="evidence">Evidence Ledger</button>
     <button data-panel="cases">Case Files</button>
     <button data-panel="intelligence">Identifier Intel</button>
+    <button data-panel="conduent">Conduent / FARE</button>
     <button data-panel="operations">Operations Feed</button>
     <button data-panel="terminal">Command Center</button>
     <button data-panel="support">Support Mission</button>
@@ -261,6 +262,143 @@
         </div>
 
         <div id="intel-limits" class="feed-list"></div>
+      </div>
+
+
+      <div id="panel-conduent" class="panel">
+        <div class="section-header">
+          <h2>Conduent / FARE / TTEAP Evidence Track</h2>
+          <span class="badge">Source-Backed</span>
+        </div>
+
+        <p class="intel-basis">
+          Purpose: distinguish the documented statewide vendor architecture from the still-unresolved
+          case-specific transaction provenance. This panel does not assert misconduct; it identifies
+          the records needed to test whether the FARE/TTEAP workflow was correctly applied.
+        </p>
+
+        <div class="conduent-status-grid">
+          <div class="conduent-status-card verified">
+            <div class="label">Statewide FARE relationship</div>
+            <div class="value-small">VERIFIED</div>
+            <p>Arizona Judicial Branch materials identify FARE as a public/private collections program and identify Conduent in the FARE technical and program record.</p>
+          </div>
+          <div class="conduent-status-card verified">
+            <div class="label">TTEAP data path</div>
+            <div class="value-small">VERIFIED</div>
+            <p>Current CCR specifications document notice, delinquency, TTEAP status, address, and MVD hold-rejection transactions flowing between the FARE collection vendor, CCR, courts, and MVD.</p>
+          </div>
+          <div class="conduent-status-card unresolved">
+            <div class="label">Case-specific Conduent transaction</div>
+            <div class="value-small">UNRESOLVED</div>
+            <p>The architecture is documented. The specific vendor transaction records, notice events, address source, and MVD request/response for the CaseOps matter have not yet been produced.</p>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2>Documented Enforcement Chain</h2>
+        </div>
+
+        <div class="evidence-chain" aria-label="Court to FARE to Conduent to MVD workflow">
+          <div class="chain-node"><strong>Court / CMS</strong><span>Delinquent case data</span></div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node"><strong>AOC / CCR / FARE</strong><span>Statewide integration layer</span></div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node"><strong>Conduent</strong><span>FARE collection-vendor processing</span></div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node"><strong>TTEAP / MVD</strong><span>Registration-hold status/request path</span></div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node"><strong>Court feedback</strong><span>Notice, status, rejection and address transactions</span></div>
+        </div>
+
+        <div class="section-header">
+          <h2>CaseOps Chronology to Test</h2>
+        </div>
+
+        <table class="data-table conduent-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Recorded Event</th>
+              <th>What Must Be Matched</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2025-08-01</td>
+              <td>Enhanced FARE referral recorded</td>
+              <td>FARE status + special-collections flag history, including whether <code>sp_coll_flg=Q</code> was transmitted and when.</td>
+              <td><span class="status-pill status-candidate">VERIFY TRANSACTION</span></td>
+            </tr>
+            <tr>
+              <td>2025-09-24</td>
+              <td>TTEAP registration-hold activity recorded</td>
+              <td>TTEAP eligibility event, vendor request timestamp, MVD request/response, person-match basis and any rejection record.</td>
+              <td><span class="status-pill status-candidate">VERIFY TRANSACTION</span></td>
+            </tr>
+            <tr>
+              <td>2025-09-25</td>
+              <td>TTEAP notice recorded</td>
+              <td>Notice number, notice type, notice date, notice balance, mailing address/source and earlier required collection attempt(s).</td>
+              <td><span class="status-pill status-candidate">VERIFY NOTICE</span></td>
+            </tr>
+            <tr>
+              <td>2025-09-26</td>
+              <td>Mail returned undelivered</td>
+              <td>Bad-address flag, address update/skip-trace event, new-address source, downstream action after return, and any re-noticing.</td>
+              <td><span class="status-pill status-unresolved">OPEN GAP</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-header">
+          <h2>High-Value Records to Obtain</h2>
+        </div>
+        <div class="record-grid">
+          <div class="record-card">
+            <strong>Notice transaction history</strong>
+            <p><code>fr_evnts</code>: notice number, date, type, balance, TTEAP MVD status and special-collections flag.</p>
+          </div>
+          <div class="record-card">
+            <strong>FARE status / flags</strong>
+            <p>Complete history for <code>sp_coll_flg</code>, <code>tteap_flg</code>, contract indicators and all status-change timestamps.</p>
+          </div>
+          <div class="record-card">
+            <strong>Address provenance</strong>
+            <p><code>frcore_paddr</code>, bad-address flags, new-address flags, skip-trace/address source, and the exact address used for every notice.</p>
+          </div>
+          <div class="record-card">
+            <strong>MVD hold exchange</strong>
+            <p>TTEAP request timestamp, MVD response, any <code>fr_rjcts</code> rejection, person-match fields and release/recall history.</p>
+          </div>
+          <div class="record-card">
+            <strong>Audit trail</strong>
+            <p>CCR/FARE repository audit entries showing which system or actor created, changed, transmitted or received each event.</p>
+          </div>
+          <div class="record-card">
+            <strong>Two-attempt prerequisite</strong>
+            <p>Evidence of the two failed collection attempts relied upon before an MVD TTEAP hold.</p>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2>Official Source Record</h2>
+        </div>
+        <div class="source-list">
+          <a target="_blank" rel="noopener noreferrer" href="https://www.azcourts.gov/courtservices/Consolidated-Collections-Unit/FARE">Arizona Judicial Branch — FARE Program</a>
+          <a target="_blank" rel="noopener noreferrer" href="https://www.azcourts.gov/courtservices/Consolidated-Collections-Unit/Traffic-Ticket-Enforcement-Assistance-Program-TTEAP">Arizona Judicial Branch — TTEAP</a>
+          <a target="_blank" rel="noopener noreferrer" href="https://www.azcourts.gov/Portals/0/CCRMasterIntegrationDesignSpecificationVer4_1_4.pdf">CCR Master Data Integration Design Specification</a>
+          <a target="_blank" rel="noopener noreferrer" href="https://www.azcourts.gov/courtservices/Consolidated-Collections-Unit/Court-Implementations-and-Projects">Court Implementations and Projects</a>
+          <a target="_blank" rel="noopener noreferrer" href="https://www.azcourts.gov/adminservices/Procurement.aspx">Arizona Judicial Branch Procurement — FARE</a>
+        </div>
+
+        <div class="evidence-caution">
+          <strong>Presentation rule:</strong>
+          “Conduent is documented in Arizona's statewide FARE infrastructure” is supported.
+          “Conduent caused or mishandled this particular hold” requires the case-specific transaction
+          and notice records above. Keep those propositions separate.
+        </div>
       </div>
 
       <div id="panel-operations" class="panel">
