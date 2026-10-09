@@ -20,8 +20,7 @@ date,docket_scope,event,source_status,source_url
 ```
 
 Dates use `YYYY-MM-DD`; scopes are `civil`, `criminal`, or `system`.
-All five fields are required. Source URLs must use HTTPS without embedded
-credentials. Quote fields containing commas, quotes, or newlines using normal CSV
+The first four fields must be nonempty. `source_url` may be blank when no online link exists; when provided, it must use HTTPS without embedded credentials. Quote fields containing commas, quotes, or newlines using normal CSV
 quoting. Events are displayed chronologically; the source file is never rewritten.
 
 Statuses are preserved verbatim. A scheduled appearance does not establish its
