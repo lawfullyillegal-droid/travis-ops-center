@@ -30,6 +30,12 @@ jobs:
       - name: Compile Python
         run: python -m compileall -q scripts web
 
+      - name: Test local timeline tools
+        run: python -m unittest discover -s tests -v
+
+      - name: Check Termux installer syntax
+        run: bash -n setup/termux-setup.sh
+
       - name: Validate command vault
         run: python scripts/ci_validate.py
 
@@ -39,3 +45,4 @@ jobs:
           AUTH_USER: ""
           AUTH_PASS: ""
         run: python -c "from web.app import app; assert app.url_map"
+
