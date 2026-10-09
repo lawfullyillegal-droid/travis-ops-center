@@ -27,8 +27,8 @@ def read_timeline(path: Path) -> tuple[list[dict[str, str]], str]:
         line = reader.line_num
         if None in row or any(row.get(key) is None for key in FIELDS):
             raise ValueError(f"line {line}: expected exactly five columns")
-        if any(not row[key].strip() for key in FIELDS):
-            raise ValueError(f"line {line}: fields must not be blank")
+        if any(not row[key].strip() for key in FIELDS[:-1]):
+            raise ValueError(f"line {line}: required fields must not be blank")
         if any(any(ord(char) < 32 and char not in "\n\r\t" for char in value)
                for value in row.values()):
             raise ValueError(f"line {line}: unsupported control character")
@@ -40,16 +40,19 @@ def read_timeline(path: Path) -> tuple[list[dict[str, str]], str]:
             raise ValueError(f"line {line}: date must use YYYY-MM-DD")
         if row["docket_scope"] not in SCOPES:
             raise ValueError(f"line {line}: scope must be civil, criminal, or system")
-        try:
-            url = urlsplit(row["source_url"])
-            valid_url = (url.scheme == "https" and bool(url.hostname)
-                         and url.username is None and url.password is None
-                         and not any(char.isspace() for char in row["source_url"]))
-            url.port
-        except ValueError:
-            valid_url = False
-        if not valid_url:
-            raise ValueError(f"line {line}: source_url must be an HTTPS URL without credentials")
+        source_url = row["source_url"].strip()
+        if source_url:
+            try:
+                url = urlsplit(source_url)
+                valid_url = (url.scheme == "https" and bool(url.hostname)
+                             and url.username is None and url.password is None
+                             and not any(char.isspace() for char in source_url))
+                url.port
+            except ValueError:
+                valid_url = False
+            if not valid_url:
+                raise ValueError(f"line {line}: source_url must be an HTTPS URL without credentials")
+        row["source_url"] = source_url
         rows.append(row)
     if not rows:
         raise ValueError("timeline must contain at least one event")
