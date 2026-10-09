@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Termux bootstrap installer (safe, minimal)
-if command -v pkg >/dev/null 2>&1; then
-  PKG=pkg
-elif command -v apt >/dev/null 2>&1; then
-  PKG=apt
-else
-  echo "No package manager detected. Install packages manually: git, python, openssh"
+# Run from any directory; fail visibly instead of reporting incomplete installs as success.
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if ! command -v pkg >/dev/null 2>&1; then
+  echo "This installer requires Termux. On a server, create a Python venv and install requirements.txt."
   exit 1
 fi
 
 echo "Updating package lists..."
-$PKG update -y || true
+pkg update -y
 
 echo "Installing core packages: git, python, openssh, curl"
-$PKG install -y git python openssh curl || true
+pkg install -y git python openssh curl
 
 echo "Installing python deps..."
-python -m pip install --user pyyaml
+python -m venv "$REPO_ROOT/.venv"
+"$REPO_ROOT/.venv/bin/python" -m pip install -r "$REPO_ROOT/requirements.txt"
+"$REPO_ROOT/.venv/bin/python" -m pip check
 
-echo "Termux setup complete. Ensure you have a GitHub SSH key configured for push/pull."
+echo "Termux setup complete. Activate the environment with:"
+printf 'source %q\n' "$REPO_ROOT/.venv/bin/activate"
+

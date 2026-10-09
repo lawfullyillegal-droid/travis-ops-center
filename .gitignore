@@ -23,6 +23,7 @@ __pycache__/
 
 # Evidence/runtime data: keep out of source control by default
 data/
+caseops-local/
 evidence/
 meta_logs/
 logs/
@@ -46,3 +47,4 @@ credentials/
 drafts/
 manifests/
 web/static/*.backup.*
+

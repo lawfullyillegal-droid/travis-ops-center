@@ -30,8 +30,8 @@ See [`SECURITY.md`](SECURITY.md).
 
 ```bash
 bash setup/termux-setup.sh
-python -m pip install -r requirements.txt
-cp config/commands.sample.yml config/commands.yml
+source .venv/bin/activate
+# Review the existing config/commands.yml before running the command center.
 python scripts/command_center.py
 ```
 
@@ -42,6 +42,19 @@ SERVER_HOST=127.0.0.1 python web/app.py
 ```
 
 Open `http://127.0.0.1:8080`.
+
+## CASEOPS timeline
+
+Review local case timelines offline with separate civil, criminal, and system
+scopes. Source statuses stay as supplied, and source links are hidden by default.
+
+```bash
+python scripts/caseops_timeline.py /path/to/timeline.csv --check
+python scripts/caseops_timeline.py /path/to/timeline.csv --scope civil
+```
+
+See [the timeline workflow](docs/CASEOPS_TIMELINE.md) for the CSV schema,
+privacy controls, and digest limitations.
 
 ## Docker/server deployment
 
@@ -66,3 +79,4 @@ Evidence and runtime databases are intentionally excluded from Git by default. G
 ## Repository hygiene
 
 If sensitive data was committed before these ignore rules existed, `.gitignore` does not remove it from history. Review Git history and repository visibility separately before treating the repository as private or sanitized.
+
