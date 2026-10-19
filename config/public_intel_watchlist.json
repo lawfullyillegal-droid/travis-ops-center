@@ -1,0 +1,8 @@
+{
+  "purpose": "PUBLIC entity-level SEC/GLEIF monitoring only. No personal identifiers, court records, or trust evidence.",
+  "watch": [
+    {"label": "Conduent Incorporated SEC filer", "kind": "cik", "value": "0001677703"},
+    {"label": "Conduent Incorporated GLEIF", "kind": "lei", "value": "549300SFJ2D2CYY6CQ11"},
+    {"label": "Conduent Business Services LLC GLEIF", "kind": "lei", "value": "54930026CNAIP718XD30"}
+  ]
+}

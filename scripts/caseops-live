@@ -1,0 +1,68 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+ROOT="${CASEOPS_ROOT:-$HOME/caseops}"
+cd "$ROOT"
+ACTION="${1:-help}"
+if [ "$#" -gt 0 ]; then shift; fi
+case "$ACTION" in
+  run)     exec python3 scripts/live_intel_monitor.py run "$@" ;;
+  loop)    exec python3 scripts/live_intel_monitor.py loop "$@" ;;
+  status)  exec python3 scripts/live_intel_monitor.py status "$@" ;;
+  report)
+    file="$ROOT/data/identifier_intel/monitor/index.html"
+    if [ ! -f "$file" ]; then echo 'Run caseops-live run first.'; exit 1; fi
+    if command -v termux-open >/dev/null 2>&1; then
+      termux-open "$file"
+    else
+      echo "Open $file in a browser or file manager"
+    fi ;;
+  dashboard)
+    echo 'Open http://127.0.0.1:8080 while this runs (local only).'
+    exec python3 web/app.py ;;
+  publish)
+    expected='lawfullyillegal-droid/travis-ops-center'
+    remote="$(git remote get-url origin 2>/dev/null || true)"
+    case "$remote" in *"$expected"*) ;; *) echo 'Refusing: this is not the expected GitHub repository.' >&2; exit 2;; esac
+    names=(scripts/live_intel_monitor.py scripts/caseops-live config/public_intel_watchlist.json docs/LIVE_INTEL_RUNBOOK.md tests/test_live_intel_monitor.py .github/workflows/public-intel-monitor.yml)
+    echo 'Public-only code paths to be committed:'
+    printf '  %s\n' "${names[@]}"
+    echo 'Do NOT put personal, court, or trust case evidence in this public repository.'
+    if [ -z "${CASEOPS_CONFIRM_PUBLIC_PUSH:-}" ]; then
+      read -r -p 'Type PUBLISH to create and push a PUBLIC code branch: ' confirm
+      [ "$confirm" = PUBLISH ] || { echo 'Cancelled'; exit 1; }
+    fi
+    git add -- "${names[@]}"
+    staged="$(git diff --cached --name-only)"
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      approved=0
+      for name in "${names[@]}"; do [ "$f" = "$name" ] && approved=1 && break; done
+      [ "$approved" = 1 ] || { echo "Unrelated file already staged: $f. Refusing commit." >&2; exit 2; }
+    done <<EOF
+$staged
+EOF
+    branch="$(git branch --show-current)"
+    if [ "$branch" = main ] || [ "$branch" = master ]; then
+      git switch -c feature/live-sec-gleif-monitor-20261019
+      branch=feature/live-sec-gleif-monitor-20261019
+    fi
+    if ! git diff --cached --quiet; then
+      git commit -m 'feat: schedule public SEC and GLEIF intelligence monitor'
+    else
+      echo 'No new public code changes to commit.'
+    fi
+    git push -u origin "$branch"
+    echo "Branch pushed. Open the pull request in GitHub; GitHub Actions schedule starts after merge to default branch."
+    ;;
+  *)
+    cat <<EOF
+CaseOps Live — Public Corporate Monitor
+  caseops-live run        Fetch SEC/GLEIF data, normalize numbers, compare baselines
+  caseops-live status     See latest changes and source errors
+  caseops-live report     Open the generated browser report
+  caseops-live loop       Run every 6 hours while Termux stays alive
+  caseops-live dashboard  Start existing localhost CaseOps dashboard
+  caseops-live publish    Review and push PUBLIC code on a feature branch
+EOF
+    ;;
+esac

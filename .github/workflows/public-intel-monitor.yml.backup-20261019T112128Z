@@ -1,0 +1,44 @@
+name: Public SEC and GLEIF entity monitor
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+permissions:
+  contents: read
+jobs:
+  public-intel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Restore previous public monitor baseline
+        uses: actions/cache/restore@v4
+        with:
+          path: data/identifier_intel/monitor/state.json
+          key: caseops-public-intel-v1-${{ github.run_id }}
+          restore-keys: |
+            caseops-public-intel-v1-
+      - name: Scan permitted official feeds
+        env:
+          CASEOPS_SEC_USER_AGENT: ${{ vars.CASEOPS_SEC_USER_AGENT }}
+          CASEOPS_SLACK_WEBHOOK: ${{ secrets.CASEOPS_SLACK_WEBHOOK }}
+        run: python scripts/live_intel_monitor.py run
+      - name: Save public monitor baseline
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/identifier_intel/monitor/state.json
+          key: caseops-public-intel-v1-${{ github.run_id }}
+      - name: Publish public-corporate report as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-intel-report-${{ github.run_id }}
+          path: |
+            data/identifier_intel/monitor/latest.json
+            data/identifier_intel/monitor/index.html
+          if-no-files-found: warn
+          retention-days: 30

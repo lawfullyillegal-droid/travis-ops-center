@@ -1,0 +1,363 @@
+[1mdiff --git a/.github/workflows/validate-commands.yml b/.github/workflows/validate-commands.yml[m
+[1mindex f4f399e..1319144 100644[m
+[1m--- a/.github/workflows/validate-commands.yml[m
+[1m+++ b/.github/workflows/validate-commands.yml[m
+[36m@@ -30,6 +30,12 @@[m [mjobs:[m
+       - name: Compile Python[m
+         run: python -m compileall -q scripts web[m
+ [m
+[32m+[m[32m      - name: Test local timeline tools[m
+[32m+[m[32m        run: python -m unittest discover -s tests -v[m
+[32m+[m
+[32m+[m[32m      - name: Check Termux installer syntax[m
+[32m+[m[32m        run: bash -n setup/termux-setup.sh[m
+[32m+[m
+       - name: Validate command vault[m
+         run: python scripts/ci_validate.py[m
+ [m
+[36m@@ -39,3 +45,4 @@[m [mjobs:[m
+           AUTH_USER: ""[m
+           AUTH_PASS: ""[m
+         run: python -c "from web.app import app; assert app.url_map"[m
+[41m+[m
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex 383fe40..002c923 100644[m
+[1m--- a/.gitignore[m
+[1m+++ b/.gitignore[m
+[36m@@ -23,6 +23,7 @@[m [m__pycache__/[m
+ [m
+ # Evidence/runtime data: keep out of source control by default[m
+ data/[m
+[32m+[m[32mcaseops-local/[m
+ evidence/[m
+ meta_logs/[m
+ logs/[m
+[36m@@ -46,3 +47,4 @@[m [mcredentials/[m
+ drafts/[m
+ manifests/[m
+ web/static/*.backup.*[m
+[41m+[m
+[1mdiff --git a/README.md b/README.md[m
+[1mindex 6bbafa4..ce11d06 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -30,8 +30,8 @@[m [mSee [`SECURITY.md`](SECURITY.md).[m
+ [m
+ ```bash[m
+ bash setup/termux-setup.sh[m
+[31m-python -m pip install -r requirements.txt[m
+[31m-cp config/commands.sample.yml config/commands.yml[m
+[32m+[m[32msource .venv/bin/activate[m
+[32m+[m[32m# Review the existing config/commands.yml before running the command center.[m
+ python scripts/command_center.py[m
+ ```[m
+ [m
+[36m@@ -43,6 +43,19 @@[m [mSERVER_HOST=127.0.0.1 python web/app.py[m
+ [m
+ Open `http://127.0.0.1:8080`.[m
+ [m
+[32m+[m[32m## CASEOPS timeline[m
+[32m+[m
+[32m+[m[32mReview local case timelines offline with separate civil, criminal, and system[m
+[32m+[m[32mscopes. Source statuses stay as supplied, and source links are hidden by default.[m
+[32m+[m
+[32m+[m[32m```bash[m
+[32m+[m[32mpython scripts/caseops_timeline.py /path/to/timeline.csv --check[m
+[32m+[m[32mpython scripts/caseops_timeline.py /path/to/timeline.csv --scope civil[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32mSee [the timeline workflow](docs/CASEOPS_TIMELINE.md) for the CSV schema,[m
+[32m+[m[32mprivacy controls, and digest limitations.[m
+[32m+[m
+ ## Docker/server deployment[m
+ [m
+ ```bash[m
+[36m@@ -66,3 +79,4 @@[m [mEvidence and runtime databases are intentionally excluded from Git by default. G[m
+ ## Repository hygiene[m
+ [m
+ If sensitive data was committed before these ignore rules existed, `.gitignore` does not remove it from history. Review Git history and repository visibility separately before treating the repository as private or sanitized.[m
+[41m+[m
+[1mdiff --git a/docs/CASEOPS_TIMELINE.md b/docs/CASEOPS_TIMELINE.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..12079a8[m
+[1m--- /dev/null[m
+[1m+++ b/docs/CASEOPS_TIMELINE.md[m
+[36m@@ -0,0 +1,50 @@[m
+[32m+[m[32m# CASEOPS timeline workflow[m
+[32m+[m
+[32m+[m[32mKeep timeline CSVs in the ignored `caseops-local/` directory or outside the checkout.[m
+[32m+[m[32mThe timeline tool uses Python's standard library, works offline, and never opens[m
+[32m+[m[32msource URLs. No dependency installation is needed for this command.[m
+[32m+[m
+[32m+[m[32m```bash[m
+[32m+[m[32mmkdir -p caseops-local[m
+[32m+[m[32m# Copy your timeline CSV into caseops-local using your file manager.[m
+[32m+[m[32mpython scripts/caseops_timeline.py caseops-local/timeline.csv --check[m
+[32m+[m[32mpython scripts/caseops_timeline.py caseops-local/timeline.csv[m
+[32m+[m[32mpython scripts/caseops_timeline.py caseops-local/timeline.csv --scope civil[m
+[32m+[m[32mpython scripts/caseops_timeline.py caseops-local/timeline.csv --scope criminal[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32mThe exact CSV header is:[m
+[32m+[m
+[32m+[m[32m```csv[m
+[32m+[m[32mdate,docket_scope,event,source_status,source_url[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32mDates use `YYYY-MM-DD`; scopes are `civil`, `criminal`, or `system`.[m
+[32m+[m[32mAll five fields are required. Source URLs must use HTTPS without embedded[m
+[32m+[m[32mcredentials. Quote fields containing commas, quotes, or newlines using normal CSV[m
+[32m+[m[32mquoting. Events are displayed chronologically; the source file is never rewritten.[m
+[32m+[m
+[32m+[m[32mStatuses are preserved verbatim. A scheduled appearance does not establish its[m
+[32m+[m[32moutcome, and receipt of an order does not establish the attachment's contents.[m
+[32m+[m[32mCivil and criminal entries retain their separate scopes.[m
+[32m+[m
+[32m+[m[32mSource links are omitted from display unless you pass `--include-links`. Event[m
+[32m+[m[32mdescriptions and statuses can still contain private information: the default[m
+[32m+[m[32mreport is for local review and is not an automatically sanitized publication.[m
+[32m+[m[32m`--check` prints only the event count and input-file SHA-256.[m
+[32m+[m
+[32m+[m[32mThe digest identifies the CSV's exact bytes, including line endings and ordering.[m
+[32m+[m[32mIt does not authenticate source communications or establish the truth of an event.[m
+[32m+[m[32mChanging bytes changes the digest. A GitHub commit containing a digest is a[m
+[32m+[m[32mreference point; checking it requires the corresponding original file.[m
+[32m+[m
+[32m+[m[32m## GitHub review[m
+[32m+[m
+[32m+[m[32mCommit code, tests, and reviewed documentation on a feature branch. Keep case[m
+[32m+[m[32mCSVs, Gmail links, and reports local. Before pushing, inspect the staged paths[m
+[32m+[m[32mwith `git diff --cached --name-only` and review the staged changes with[m
+[32m+[m[32m`git diff --cached`. Ignore rules do not remove previously tracked files.[m
+[32m+[m
+[32m+[m[32mThe validation workflow runs timeline tests and checks installer syntax along[m
+[32m+[m[32mwith the existing command and web checks. Actual package installation must also[m
+[32m+[m[32mbe exercised on a Termux device.[m
+[1mdiff --git a/scripts/caseops_timeline.py b/scripts/caseops_timeline.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0298dc8[m
+[1m--- /dev/null[m
+[1m+++ b/scripts/caseops_timeline.py[m
+[36m@@ -0,0 +1,99 @@[m
+[32m+[m[32m#!/usr/bin/env python3[m
+[32m+[m[32m"""Validate and review a local CASEOPS timeline without fetching source links."""[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m
+[32m+[m[32mimport argparse[m
+[32m+[m[32mimport csv[m
+[32m+[m[32mimport hashlib[m
+[32m+[m[32mimport io[m
+[32m+[m[32mimport json[m
+[32m+[m[32mimport sys[m
+[32m+[m[32mfrom collections import Counter[m
+[32m+[m[32mfrom datetime import date[m
+[32m+[m[32mfrom pathlib import Path[m
+[32m+[m[32mfrom urllib.parse import urlsplit[m
+[32m+[m
+[32m+[m[32mFIELDS = ("date", "docket_scope", "event", "source_status", "source_url")[m
+[32m+[m[32mSCOPES = {"civil", "criminal", "system"}[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef read_timeline(path: Path) -> tuple[list[dict[str, str]], str]:[m
+[32m+[m[32m    raw = path.read_bytes()[m
+[32m+[m[32m    reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig")), strict=True)[m
+[32m+[m[32m    if reader.fieldnames != list(FIELDS):[m
+[32m+[m[32m        raise ValueError("CSV header must be: " + ",".join(FIELDS))[m
+[32m+[m[32m    rows = [][m
+[32m+[m[32m    for row in reader:[m
+[32m+[m[32m        line = reader.line_num[m
+[32m+[m[32m        if None in row or any(row.get(key) is None for key in FIELDS):[m
+[32m+[m[32m            raise ValueError(f"line {line}: expected exactly five columns")[m
+[32m+[m[32m        if any(not row[key].strip() for key in FIELDS):[m
+[32m+[m[32m            raise ValueError(f"line {line}: fields must not be blank")[m
+[32m+[m[32m        if any(any(ord(char) < 32 and char not in "\n\r\t" for char in value)[m
+[32m+[m[32m               for value in row.values()):[m
+[32m+[m[32m            raise ValueError(f"line {line}: unsupported control character")[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            parsed = date.fromisoformat(row["date"])[m
+[32m+[m[32m        except ValueError as exc:[m
+[32m+[m[32m            raise ValueError(f"line {line}: invalid date") from exc[m
+[32m+[m[32m        if parsed.isoformat() != row["date"]:[m
+[32m+[m[32m            raise ValueError(f"line {line}: date must use YYYY-MM-DD")[m
+[32m+[m[32m        if row["docket_scope"] not in SCOPES:[m
+[32m+[m[32m            raise ValueError(f"line {line}: scope must be civil, criminal, or system")[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            url = urlsplit(row["source_url"])[m
+[32m+[m[32m            valid_url = (url.scheme == "https" and bool(url.hostname)[m
+[32m+[m[32m                         and url.username is None and url.password is None[m
+[32m+[m[32m                         and not any(char.isspace() for char in row["source_url"]))[m
+[32m+[m[32m            url.port[m
+[32m+[m[32m        except ValueError:[m
+[32m+[m[32m            valid_url = False[m
+[32m+[m[32m        if not valid_url:[m
+[32m+[m[32m            raise ValueError(f"line {line}: source_url must be an HTTPS URL without credentials")[m
+[32m+[m[32m        rows.append(row)[m
+[32m+[m[32m    if not rows:[m
+[32m+[m[32m        raise ValueError("timeline must contain at least one event")[m
+[32m+[m[32m    return sorted(rows, key=lambda row: row["date"]), hashlib.sha256(raw).hexdigest()[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef render(rows: list[dict[str, str]], digest: str, include_links: bool = False) -> str:[m
+[32m+[m[32m    counts = Counter(row["docket_scope"] for row in rows)[m
+[32m+[m[32m    lines = ["CASEOPS // TIMELINE", f"Events: {len(rows)} | " + " | ".join([m
+[32m+[m[32m        f"{scope}: {counts[scope]}" for scope in sorted(SCOPES)),[m
+[32m+[m[32m        f"Range: {rows[0]['date']} to {rows[-1]['date']}", f"CSV SHA-256: {digest}",[m
+[32m+[m[32m        "Source statuses are supplied descriptions; source contents have not been verified.", ""][m
+[32m+[m[32m    for row in rows:[m
+[32m+[m[32m        # JSON quoting prevents terminal escapes and makes embedded newlines explicit.[m
+[32m+[m[32m        lines.append(f"{row['date']} [{row['docket_scope']}] " + json.dumps(row["event"], ensure_ascii=False))[m
+[32m+[m[32m        lines.append("  Status: " + json.dumps(row["source_status"], ensure_ascii=False))[m
+[32m+[m[32m        if include_links:[m
+[32m+[m[32m            lines.append("  Source: " + json.dumps(row["source_url"], ensure_ascii=False))[m
+[32m+[m[32m    return "\n".join(lines) + "\n"[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef main(argv: list[str] | None = None) -> int:[m
+[32m+[m[32m    parser = argparse.ArgumentParser(description=__doc__)[m
+[32m+[m[32m    parser.add_argument("csv", type=Path)[m
+[32m+[m[32m    parser.add_argument("--scope", choices=sorted(SCOPES), help="show only one docket scope")[m
+[32m+[m[32m    parser.add_argument("--include-links", action="store_true", help="include private source URLs in output")[m
+[32m+[m[32m    parser.add_argument("--check", action="store_true", help="validate without printing case details")[m
+[32m+[m[32m    args = parser.parse_args(argv)[m
+[32m+[m[32m    try:[m
+[32m+[m[32m        rows, digest = read_timeline(args.csv.expanduser())[m
+[32m+[m[32m    except (OSError, UnicodeError, csv.Error, ValueError) as exc:[m
+[32m+[m[32m        print(f"FAIL: {exc}", file=sys.stderr)[m
+[32m+[m[32m        return 1[m
+[32m+[m[32m    if args.check:[m
+[32m+[m[32m        print(f"PASS: {len(rows)} events; CSV SHA-256: {digest}")[m
+[32m+[m[32m        return 0[m
+[32m+[m[32m    if args.scope:[m
+[32m+[m[32m        rows = [row for row in rows if row["docket_scope"] == args.scope][m
+[32m+[m[32m    if not rows:[m
+[32m+[m[32m        print(f"No events for scope: {args.scope}")[m
+[32m+[m[32m        return 0[m
+[32m+[m[32m    print(render(rows, digest, args.include_links), end="")[m
+[32m+[m[32m    return 0[m
+[32m+[m
+[32m+[m
+[32m+[m[32mif __name__ == "__main__":[m
+[32m+[m[32m    raise SystemExit(main())[m
+[1mdiff --git a/setup/termux-setup.sh b/setup/termux-setup.sh[m
+[1mindex 360655b..1f33ce7 100644[m
+[1m--- a/setup/termux-setup.sh[m
+[1m+++ b/setup/termux-setup.sh[m
+[36m@@ -1,23 +1,24 @@[m
+ #!/usr/bin/env bash[m
+ set -euo pipefail[m
+ [m
+[31m-# Termux bootstrap installer (safe, minimal)[m
+[31m-if command -v pkg >/dev/null 2>&1; then[m
+[31m-  PKG=pkg[m
+[31m-elif command -v apt >/dev/null 2>&1; then[m
+[31m-  PKG=apt[m
+[31m-else[m
+[31m-  echo "No package manager detected. Install packages manually: git, python, openssh"[m
+[32m+[m[32m# Run from any directory; fail visibly instead of reporting incomplete installs as success.[m
+[32m+[m[32mREPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"[m
+[32m+[m[32mif ! command -v pkg >/dev/null 2>&1; then[m
+[32m+[m[32m  echo "This installer requires Termux. On a server, create a Python venv and install requirements.txt."[m
+   exit 1[m
+ fi[m
+ [m
+ echo "Updating package lists..."[m
+[31m-$PKG update -y || true[m
+[32m+[m[32mpkg update -y[m
+ [m
+ echo "Installing core packages: git, python, openssh, curl"[m
+[31m-$PKG install -y git python openssh curl || true[m
+[32m+[m[32mpkg install -y git python openssh curl[m
+ [m
+ echo "Installing python deps..."[m
+[31m-python -m pip install --user pyyaml[m
+[32m+[m[32mpython -m venv "$REPO_ROOT/.venv"[m
+[32m+[m[32m"$REPO_ROOT/.venv/bin/python" -m pip install -r "$REPO_ROOT/requirements.txt"[m
+[32m+[m[32m"$REPO_ROOT/.venv/bin/python" -m pip check[m
+[32m+[m
+[32m+[m[32mecho "Termux setup complete. Activate the environment with:"[m
+[32m+[m[32mprintf 'source %q\n' "$REPO_ROOT/.venv/bin/activate"[m
+ [m
+[31m-echo "Termux setup complete. Ensure you have a GitHub SSH key configured for push/pull."[m
+[1mdiff --git a/tests/test_caseops_timeline.py b/tests/test_caseops_timeline.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e598a03[m
+[1m--- /dev/null[m
+[1m+++ b/tests/test_caseops_timeline.py[m
+[36m@@ -0,0 +1,77 @@[m
+[32m+[m[32mimport csv[m
+[32m+[m[32mimport hashlib[m
+[32m+[m[32mimport importlib.util[m
+[32m+[m[32mimport io[m
+[32m+[m[32mimport tempfile[m
+[32m+[m[32mimport unittest[m
+[32m+[m[32mfrom contextlib import redirect_stdout, redirect_stderr[m
+[32m+[m[32mfrom pathlib import Path[m
+[32m+[m
+[32m+[m[32mspec = importlib.util.spec_from_file_location("timeline", Path(__file__).resolve().parents[1] / "scripts/caseops_timeline.py")[m
+[32m+[m[32mtimeline = importlib.util.module_from_spec(spec)[m
+[32m+[m[32mspec.loader.exec_module(timeline)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass TimelineTests(unittest.TestCase):[m
+[32m+[m[32m    def setUp(self):[m
+[32m+[m[32m        self.tmp = tempfile.TemporaryDirectory()[m
+[32m+[m[32m        self.addCleanup(self.tmp.cleanup)[m
+[32m+[m[32m        self.path = Path(self.tmp.name) / "timeline.csv"[m
+[32m+[m[32m        self.rows = [[m
+[32m+[m[32m            ["2026-09-24", "criminal", "Order, attachment", "Attachment needs review", "https://mail.google.com/private"],[m
+[32m+[m[32m            ["2026-09-14", "civil", "Clerk response", "Source communication", "https://example.org/source"],[m
+[32m+[m[32m        ][m
+[32m+[m
+[32m+[m[32m    def write(self, rows=None, fields=None):[m
+[32m+[m[32m        with self.path.open("w", newline="", encoding="utf-8") as handle:[m
+[32m+[m[32m            writer = csv.writer(handle)[m
+[32m+[m[32m            writer.writerow(fields or timeline.FIELDS)[m
+[32m+[m[32m            writer.writerows(self.rows if rows is None else rows)[m
+[32m+[m
+[32m+[m[32m    def test_preserves_status_and_sorts_without_changing_source(self):[m
+[32m+[m[32m        self.write()[m
+[32m+[m[32m        before = self.path.read_bytes()[m
+[32m+[m[32m        rows, digest = timeline.read_timeline(self.path)[m
+[32m+[m[32m        self.assertEqual(rows[0]["docket_scope"], "civil")[m
+[32m+[m[32m        self.assertEqual(rows[1]["source_status"], "Attachment needs review")[m
+[32m+[m[32m        self.assertEqual(digest, hashlib.sha256(before).hexdigest())[m
+[32m+[m[32m        self.assertEqual(self.path.read_bytes(), before)[m
+[32m+[m[32m        report = timeline.render(rows, digest)[m
+[32m+[m[32m        self.assertNotIn("https://", report)[m
+[32m+[m[32m        self.assertIn("https://mail.google.com/private", timeline.render(rows, digest, True))[m
+[32m+[m
+[32m+[m[32m    def test_invalid_rows_fail(self):[m
+[32m+[m[32m        for column, value in [(0, "2026-02-30"), (0, "20260924"), (1, "merged"),[m
+[32m+[m[32m                              (2, ""), (2, "escape\x1b"), (4, "http://example.org"),[m
+[32m+[m[32m                              (4, "https://user:pass@example.org"), (4, "https://example.org:bad")]:[m
+[32m+[m[32m            with self.subTest(column=column, value=value):[m
+[32m+[m[32m                row = self.rows[0].copy()[m
+[32m+[m[32m                row[column] = value[m
+[32m+[m[32m                self.write([row])[m
+[32m+[m[32m                with self.assertRaises(ValueError):[m
+[32m+[m[32m                    timeline.read_timeline(self.path)[m
+[32m+[m
+[32m+[m[32m    def test_rejects_empty_bad_header_and_extra_columns(self):[m
+[32m+[m[32m        for rows, fields in [([], None), (self.rows, ["bad"]), ([self.rows[0] + ["extra"]], None)]:[m
+[32m+[m[32m            with self.subTest(rows=rows, fields=fields):[m
+[32m+[m[32m                self.write(rows, fields)[m
+[32m+[m[32m                with self.assertRaises(ValueError):[m
+[32m+[m[32m                    timeline.read_timeline(self.path)[m
+[32m+[m
+[32m+[m[32m    def test_cli_check_and_scope(self):[m
+[32m+[m[32m        self.write()[m
+[32m+[m[32m        output = io.StringIO()[m
+[32m+[m[32m        with redirect_stdout(output):[m
+[32m+[m[32m            self.assertEqual(timeline.main([str(self.path), "--check"]), 0)[m
+[32m+[m[32m        self.assertNotIn("Clerk", output.getvalue())[m
+[32m+[m[32m        output = io.StringIO()[m
+[32m+[m[32m        with redirect_stdout(output):[m
+[32m+[m[32m            self.assertEqual(timeline.main([str(self.path), "--scope", "civil"]), 0)[m
+[32m+[m[32m        self.assertIn("Clerk response", output.getvalue())[m
+[32m+[m[32m        self.assertNotIn("Order, attachment", output.getvalue())[m
+[32m+[m[32m        with redirect_stderr(io.StringIO()):[m
+[32m+[m[32m            self.assertEqual(timeline.main([str(self.path) + ".missing"]), 1)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mif __name__ == "__main__":[m
+[32m+[m[32m    unittest.main()[m

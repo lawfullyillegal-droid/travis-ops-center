@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# One-word GitHub operations for the Termux CaseOps checkout.
+set -euo pipefail
+
+SOURCE_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+REPO_DIR="$(cd -- "$(dirname -- "$SOURCE_PATH")/.." && pwd)"
+
+if ! git -C "$REPO_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "CaseOps Git checkout not found beside this script."
+  exit 1
+fi
+
+die() { printf 'STOP: %s\n' "$*" >&2; exit 1; }
+
+branch() { git -C "$REPO_DIR" branch --show-current; }
+
+fetch_main() {
+  echo "Checking GitHub..."
+  git -C "$REPO_DIR" fetch origin main
+}
+
+show_status() {
+  printf '\nCASEOPS // GITHUB STATUS\n'
+  printf 'Branch: %s\n' "$(branch)"
+  if git -C "$REPO_DIR" fetch -q origin main; then
+    local ahead behind
+    ahead="$(git -C "$REPO_DIR" rev-list --count origin/main..HEAD)"
+    behind="$(git -C "$REPO_DIR" rev-list --count HEAD..origin/main)"
+    printf 'Compared with GitHub main: %s ahead, %s behind\n' "$ahead" "$behind"
+  else
+    echo "GitHub could not be reached. Showing local status."
+  fi
+  git -C "$REPO_DIR" -c color.status=false status --short
+  git -C "$REPO_DIR" log -1 --format='Latest local commit: %h %s'
+  echo "A blank change list means no local file changes."
+}
+
+require_main() {
+  [[ "$(branch)" == main ]] || die "Switch to main first: cd ~/caseops && git switch main"
+}
+
+update_code() {
+  require_main
+  [[ -z "$(git -C "$REPO_DIR" status --porcelain)" ]] || die "Local changes exist. Review them with caseops-git before updating."
+  fetch_main
+  git -C "$REPO_DIR" merge --ff-only origin/main || die "GitHub and the phone diverged. No files were overwritten."
+  echo "Update complete."
+  show_status
+}
+
+allowed_code_path() {
+  [[ "$1" =~ ^(README\.md|requirements\.txt|scripts/[^/]+\.(py|sh)|scripts/caseops-[^/]+|web/[^/]+\.py|web/static/[^/]+\.(js|css)|web/templates/[^/]+\.html|setup/[^/]+\.sh|tests/[^/]+\.py|docs/[^/]+\.md|\.github/workflows/[^/]+\.(yml|yaml))$ ]]
+}
+
+publish_code() {
+  require_main
+  [[ -z "$(git -C "$REPO_DIR" diff --cached --name-only)" ]] || die "Files are already staged. Review them with git diff --cached before publishing."
+  fetch_main
+  [[ "$(git -C "$REPO_DIR" rev-parse HEAD)" == "$(git -C "$REPO_DIR" rev-parse origin/main)" ]] || die "Update or reconcile main first; GitHub has a different commit."
+
+  printf '\nChanged files (nothing is selected automatically):\n'
+  git -C "$REPO_DIR" -c color.status=false status --short
+  printf 'Type one code file path relative to ~/caseops (example: scripts/caseops_timeline.py): '
+  local selected confirmation
+  IFS= read -r selected
+  [[ -n "$selected" && "$selected" != /* && "$selected" != *..* ]] || die "Enter one relative code file path."
+  allowed_code_path "$selected" || die "That path is outside the code/documentation allow-list. Case data stays local."
+  [[ ! -d "$REPO_DIR/$selected" ]] || die "Select a single file, not a directory."
+  [[ ! -L "$REPO_DIR/$selected" ]] || die "Symbolic links cannot be published through this menu."
+  if git -C "$REPO_DIR" check-ignore -q -- "$selected"; then
+    die "That file is ignored and will not be published."
+  fi
+  [[ -e "$REPO_DIR/$selected" ]] || git -C "$REPO_DIR" ls-files --error-unmatch -- "$selected" >/dev/null 2>&1 || die "File not found."
+
+  git -C "$REPO_DIR" add -- "$selected"
+  if git -C "$REPO_DIR" diff --cached --quiet; then
+    echo "No changes to publish in that file."
+    return
+  fi
+  if ! git -C "$REPO_DIR" diff --cached --check; then
+    git -C "$REPO_DIR" restore --staged -- "$selected"
+    die "Whitespace errors found. Working file was left intact."
+  fi
+  printf '\nReview exactly what would become public:\n'
+  git -C "$REPO_DIR" --no-pager diff --cached -- "$selected"
+  printf '\nType PUBLISH to commit and push this one file, or anything else to cancel: '
+  IFS= read -r confirmation
+  if [[ "$confirmation" != PUBLISH ]]; then
+    git -C "$REPO_DIR" restore --staged -- "$selected"
+    echo "Canceled. Your working file was left intact."
+    return
+  fi
+  git -C "$REPO_DIR" commit -m "Update CaseOps code: $selected"
+  git -C "$REPO_DIR" push origin main || die "Commit saved locally, but push failed. Run caseops-git for status; do not repeat publish."
+  echo "Published to GitHub main."
+}
+
+install_command() {
+  local target_dir="${PREFIX:-$HOME/.local}/bin"
+  mkdir -p -- "$target_dir"
+  ln -sfn -- "$SOURCE_PATH" "$target_dir/caseops-git"
+  printf 'Installed: %s/caseops-git\n' "$target_dir"
+  echo "Open a new Termux session if the command is not found yet."
+}
+
+menu() {
+  while true; do
+    printf '\nCASEOPS // GITHUB\n1) Status\n2) Update code from GitHub\n3) Review and publish one code file\n4) Quit\nChoose 1-4: '
+    local choice
+    IFS= read -r choice || return
+    case "$choice" in
+      1) show_status ;;
+      2) update_code ;;
+      3) publish_code ;;
+      4) return ;;
+      *) echo "Choose 1, 2, 3, or 4." ;;
+    esac
+  done
+}
+
+case "${1:-menu}" in
+  install) install_command ;;
+  status) show_status ;;
+  update) update_code ;;
+  publish) publish_code ;;
+  menu) menu ;;
+  *) echo "Usage: caseops-git [status|update|publish|install]"; exit 2 ;;
+esac
