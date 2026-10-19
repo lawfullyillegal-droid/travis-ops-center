@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# CASEOPS_GIT_SYNC_V1: secure local dashboard launcher
+set -euo pipefail
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_DIR"
+mkdir -p caseops-local
+chmod 700 caseops-local
+AUTHFILE="caseops-local/dashboard-auth.env"
+if [[ ! -f "$AUTHFILE" ]]; then
+  umask 077
+  PY_FOR_SECRET="$(command -v python3 || command -v python)"
+  PASS="$("$PY_FOR_SECRET" -c 'import secrets;print(secrets.token_urlsafe(20))')"
+  printf 'AUTH_USER=caseops\nAUTH_PASS=%s\n' "$PASS" > "$AUTHFILE"
+  chmod 600 "$AUTHFILE"
+  echo 'Created local-only dashboard credentials.'
+fi
+# The local credential file is created by this launcher; do not put shell commands there.
+# shellcheck disable=SC1090
+source "$AUTHFILE"
+export AUTH_USER AUTH_PASS
+export SERVER_HOST=127.0.0.1 SERVER_PORT="${SERVER_PORT:-8080}"
+PYTHON="$(command -v python3 || command -v python)"
+if [[ -x .venv/bin/python ]]; then PYTHON=".venv/bin/python"; fi
+if ! "$PYTHON" -c 'import flask, flask_httpauth' >/dev/null 2>&1; then
+  echo 'Flask dependencies are missing. In Termux run: python -m pip install -r requirements.txt'
+  exit 1
+fi
+printf '\nCaseOps dashboard: http://127.0.0.1:%s\n' "$SERVER_PORT"
+printf 'Username: %s\nPassword: %s\n' "$AUTH_USER" "$AUTH_PASS"
+echo 'This login is for localhost only. Do not expose Basic Auth over plain HTTP tunnels.'
+echo 'If port 8080 is already in use, stop the old web server before running this.'
+exec "$PYTHON" web/app.py

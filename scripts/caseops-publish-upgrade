@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# CASEOPS_GIT_SYNC_V1: explicitly review and publish only upgrade source files.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+files=(web/app.py web/static/app.js web/templates/dashboard.html web/static/style.css scripts/caseops-web scripts/caseops-publish-upgrade)
+[[ "$(git branch --show-current)" == main ]] || { echo 'STOP: switch to main first.'; exit 1; }
+[[ -z "$(git diff --cached --name-only)" ]] || { echo 'STOP: other files are already staged.'; exit 1; }
+echo 'Checking current GitHub main...'
+git fetch origin main
+[[ "$(git rev-parse HEAD)" == "$(git rev-parse refs/remotes/origin/main)" ]] || { echo 'STOP: remote and local commits differ.'; exit 1; }
+for f in "${files[@]}"; do [[ -f "$f" ]] || { echo "STOP: missing $f"; exit 1; }; done
+# Only these six reviewed source paths are staged. Evidence is never staged.
+git add -- "${files[@]}"
+git diff --cached --check || { git restore --staged -- "${files[@]}"; echo 'STOP: whitespace problems.'; exit 1; }
+printf '
+FILES TO BE MADE PUBLIC:
+'
+git diff --cached --stat
+printf '
+FULL PATCH (review before approving):
+'
+git --no-pager diff --cached
+printf '
+Type PUBLISH to commit and push ONLY the six files listed above: '
+IFS= read -r approval
+if [[ "$approval" != PUBLISH ]]; then
+  git restore --staged -- "${files[@]}"
+  echo 'Canceled. No commit or push was made.'
+  exit 0
+fi
+if git diff --cached --quiet; then echo 'No changes to publish.'; exit 0; fi
+git commit -m 'Enable secured GitHub Sync dashboard'
+git push origin main
+echo 'Published upgrade code. Private evidence was not uploaded.'

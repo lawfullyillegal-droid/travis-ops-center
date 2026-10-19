@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="caseops-git-token" content="{{ git_csrf }}" />
   <title>LAWFULLY ILLEGAL — Command Center</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -35,6 +36,7 @@
     <button data-panel="intelligence">Identifier Intel</button>
     <button data-panel="conduent">Conduent / FARE</button>
     <button data-panel="operations">Operations Feed</button>
+    <button data-panel="git">GitHub Sync</button>
     <button data-panel="terminal">Command Center</button>
     <button data-panel="support">Support Mission</button>
   </nav>
@@ -413,6 +415,32 @@
             <p>All operational updates will appear here in real time.</p>
           </div>
         </div>
+      </div>
+
+
+      <!-- CASEOPS_GIT_SYNC_V1 -->
+      <div id="panel-git" class="panel">
+        <div class="section-header">
+          <h2>GitHub Sync Center</h2>
+          <span class="badge">Review Before Update</span>
+        </div>
+        <p class="intel-basis">Check GitHub, inspect changed source paths, then explicitly approve a fast-forward update. No evidence, private files, or code is automatically uploaded.</p>
+        <div class="git-sync-grid">
+          <div class="stat-card"><div class="label">Branch</div><div class="git-sync-value" id="git-branch">—</div></div>
+          <div class="stat-card"><div class="label">Commits behind</div><div class="git-sync-value" id="git-behind">—</div></div>
+          <div class="stat-card"><div class="label">Commits ahead</div><div class="git-sync-value" id="git-ahead">—</div></div>
+          <div class="stat-card"><div class="label">Local changes</div><div class="git-sync-value" id="git-dirty">—</div></div>
+        </div>
+        <div class="git-sync-actions">
+          <button class="action-btn-sm" id="git-refresh" type="button">View Local Git Status</button>
+          <button class="action-btn-sm" id="git-fetch" type="button">Check GitHub for Updates</button>
+          <button class="action-btn-sm" id="git-apply" type="button" disabled>Review &amp; Apply Update</button>
+        </div>
+        <p id="git-message" class="git-sync-message" role="status" aria-live="polite">Open the panel to view the latest fetched Git status.</p>
+        <div class="record-card"><strong>Incoming files</strong><p>Read these file paths before applying an update:</p>
+          <ul id="git-incoming-list"><li>No incoming changes loaded.</li></ul>
+        </div>
+        <p class="intel-basis">To publish one reviewed code file, use <code>caseops-git publish</code> in Termux. This page never pushes to your public repository.</p>
       </div>
 
       <div id="panel-terminal" class="panel">

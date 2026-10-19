@@ -1,4 +1,9 @@
 from pathlib import Path
+from secrets import token_urlsafe
+from threading import Lock
+from urllib.parse import urlsplit
+import subprocess
+from flask import request
 from secrets import compare_digest
 import json
 import os
@@ -69,7 +74,7 @@ def health():
 @app.route("/")
 @auth.login_required
 def index():
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", git_csrf=GIT_CSRF_TOKEN if AUTH_ENABLED else "")
 
 
 @app.route("/api/ledger")
@@ -262,6 +267,130 @@ def serve_file(eid):
 
     return send_file(str(stored), as_attachment=True)
 
+
+
+# CASEOPS_GIT_SYNC_V1
+# The browser can fetch and fast-forward reviewed code. It cannot stage, commit,
+# push or publish local evidence. Writes require configured HTTP Basic credentials.
+GIT_CSRF_TOKEN = token_urlsafe(32)
+GIT_SYNC_LOCK = Lock()
+TRUSTED_GIT_REMOTES = {
+    "https://github.com/lawfullyillegal-droid/travis-ops-center.git",
+    "https://github.com/lawfullyillegal-droid/travis-ops-center",
+    "git@github.com:lawfullyillegal-droid/travis-ops-center.git",
+}
+
+
+class GitSyncFailure(RuntimeError):
+    pass
+
+
+def git_exec(*args, timeout=20):
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), *args],
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            timeout=timeout, check=True,
+            env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
+        )
+        return result.stdout.strip()
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        # Avoid sending potentially sensitive Git stderr into a public dashboard.
+        raise GitSyncFailure("Git command failed; check Termux for details.") from exc
+
+
+def git_review_snapshot():
+    repo = Path(git_exec("rev-parse", "--show-toplevel")).resolve()
+    if repo != REPO_ROOT.resolve():
+        raise GitSyncFailure("Git checkout does not match CaseOps root.")
+    origin = git_exec("remote", "get-url", "origin")
+    if origin not in TRUSTED_GIT_REMOTES:
+        raise GitSyncFailure("Unexpected origin remote. Inspect in Termux.")
+    branch = git_exec("branch", "--show-current")
+    head = git_exec("rev-parse", "HEAD")
+    # Strictly use the local fetched tracking ref, never an unreviewed pull.
+    remote = git_exec("rev-parse", "refs/remotes/origin/main")
+    working = git_exec("status", "--porcelain=v1", "--untracked-files=all").splitlines()
+    ahead, behind = map(int, git_exec(
+        "rev-list", "--left-right", "--count", "HEAD...refs/remotes/origin/main"
+    ).split())
+    incoming = git_exec("diff", "--name-only", "HEAD..refs/remotes/origin/main").splitlines()
+    return {
+        "branch": branch, "head": head, "remote": remote,
+        "ahead": ahead, "behind": behind, "clean": not working,
+        "local_change_count": len(working),
+        "incoming_files": incoming[:50], "incoming_count": len(incoming),
+        "can_update": (branch == "main" and not working and ahead == 0 and behind > 0),
+        "write_enabled": AUTH_ENABLED,
+        "notice": "Only code is updated. Private evidence is never staged or published.",
+    }
+
+
+def git_request_authorized():
+    if not AUTH_ENABLED or not request.is_json:
+        return False
+    origin = request.headers.get("Origin", "")
+    parsed = urlsplit(origin)
+    if parsed.scheme not in {"http", "https"} or parsed.netloc != request.host:
+        return False
+    token = request.headers.get("X-CaseOps-CSRF", "")
+    return bool(token) and compare_digest(token, GIT_CSRF_TOKEN)
+
+
+@app.route("/api/git/status")
+@auth.login_required
+def git_status_api():
+    if not AUTH_ENABLED:
+        return jsonify({"error": "Start the dashboard using scripts/caseops-web to enable Git controls."}), 403
+    try:
+        return jsonify(git_review_snapshot())
+    except GitSyncFailure as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.route("/api/git/fetch", methods=["POST"])
+@auth.login_required
+def git_fetch_api():
+    if not git_request_authorized():
+        return jsonify({"error": "Authorization required. Restart using scripts/caseops-web."}), 403
+    if not GIT_SYNC_LOCK.acquire(blocking=False):
+        return jsonify({"error": "Another Git operation is running."}), 409
+    try:
+        git_review_snapshot()  # Validate origin before network access.
+        git_exec("fetch", "--quiet", "origin", "main", timeout=40)
+        return jsonify(git_review_snapshot())
+    except GitSyncFailure as exc:
+        return jsonify({"error": str(exc)}), 503
+    finally:
+        GIT_SYNC_LOCK.release()
+
+
+@app.route("/api/git/update", methods=["POST"])
+@auth.login_required
+def git_update_api():
+    if not git_request_authorized():
+        return jsonify({"error": "Authorization required. Restart using scripts/caseops-web."}), 403
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON request."}), 400
+    if not GIT_SYNC_LOCK.acquire(blocking=False):
+        return jsonify({"error": "Another Git operation is running."}), 409
+    try:
+        state = git_review_snapshot()
+        if not state["can_update"]:
+            return jsonify({"error": "Cannot update: check branch, local changes and GitHub history."}), 409
+        if data.get("head") != state["head"] or data.get("remote") != state["remote"]:
+            return jsonify({"error": "GitHub changed. Check status again before updating."}), 409
+        git_exec("merge", "--ff-only", "refs/remotes/origin/main", timeout=40)
+        return jsonify({
+            "status": "updated", "head": git_exec("rev-parse", "HEAD"),
+            "message": "Fast-forward completed. Restart the CaseOps web server to load new code.",
+            "restart_required": True,
+        })
+    except GitSyncFailure as exc:
+        return jsonify({"error": str(exc)}), 503
+    finally:
+        GIT_SYNC_LOCK.release()
 
 @app.route("/logs")
 @auth.login_required

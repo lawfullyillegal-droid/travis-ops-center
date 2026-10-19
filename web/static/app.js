@@ -7,6 +7,7 @@ window.app = {
     this.loadCases();
     this.loadFeed();
     this.initTerminal();
+    this.initGit();
   },
 
   initNav() {
@@ -85,7 +86,90 @@ window.app = {
   },
 
   runSync() {
-    alert('Vault sync is handled from the repo shell.\nUse: ./scripts/sync_vault.sh "message"');
+    this.switchPanel('git');
+    this.loadGit(false);
+  },
+
+
+  // CASEOPS_GIT_SYNC_V1
+  async gitApi(path, payload) {
+    const token = document.querySelector('meta[name="caseops-git-token"]')?.content || '';
+    const options = payload === undefined ? {} : {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CaseOps-CSRF': token},
+      body: JSON.stringify(payload),
+    };
+    const response = await fetch(path, {...options, credentials: 'same-origin'});
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error || 'GitHub request failed');
+    return body;
+  },
+
+  gitMessage(message) {
+    document.getElementById('git-message').textContent = message;
+  },
+
+  async loadGit(fetchRemote = false) {
+    const refresh = document.getElementById('git-refresh');
+    const fetchButton = document.getElementById('git-fetch');
+    const apply = document.getElementById('git-apply');
+    [refresh, fetchButton, apply].forEach(btn => btn.disabled = true);
+    this.gitMessage(fetchRemote ? 'Checking GitHub...' : 'Reading Git status...');
+    try {
+      const state = await this.gitApi(fetchRemote ? '/api/git/fetch' : '/api/git/status',
+        fetchRemote ? {} : undefined);
+      this.gitState = state;
+      document.getElementById('git-branch').textContent = state.branch;
+      document.getElementById('git-ahead').textContent = String(state.ahead);
+      document.getElementById('git-behind').textContent = String(state.behind);
+      document.getElementById('git-dirty').textContent = state.clean ? 'Clean' : String(state.local_change_count);
+      const list = document.getElementById('git-incoming-list');
+      list.replaceChildren();
+      if (!state.incoming_files.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No incoming file changes.';
+        list.appendChild(li);
+      } else {
+        state.incoming_files.forEach(name => {
+          const li = document.createElement('li');
+          li.textContent = name;
+          list.appendChild(li);
+        });
+      }
+      this.gitMessage(`Local commit ${state.head.slice(0, 12)}. GitHub main ${state.remote.slice(0, 12)}. ${state.can_update ? 'Update available. Review the files before applying.' : 'No safe fast-forward update is available.'}`);
+      apply.disabled = !state.can_update;
+    } catch (error) {
+      this.gitState = null;
+      this.gitMessage(error.message);
+    } finally {
+      refresh.disabled = false;
+      fetchButton.disabled = !document.querySelector('meta[name="caseops-git-token"]')?.content;
+    }
+  },
+
+  async applyGitUpdate() {
+    const state = this.gitState;
+    if (!state?.can_update) return;
+    const answer = window.prompt(`You are about to apply ${state.behind} incoming commit(s) to local CaseOps code.\nNo files will be pushed.\nType UPDATE to proceed:`);
+    if (answer !== 'UPDATE') return;
+    const apply = document.getElementById('git-apply');
+    apply.disabled = true;
+    this.gitMessage('Applying fast-forward update...');
+    try {
+      const result = await this.gitApi('/api/git/update', {head: state.head, remote: state.remote});
+      this.gitMessage(result.message);
+      this.gitState = null;
+      await this.loadGit(false);
+      this.gitMessage(result.message);
+    } catch (error) {
+      this.gitMessage(error.message);
+    }
+  },
+
+  initGit() {
+    document.getElementById('git-refresh')?.addEventListener('click', () => this.loadGit(false));
+    document.getElementById('git-fetch')?.addEventListener('click', () => this.loadGit(true));
+    document.getElementById('git-apply')?.addEventListener('click', () => this.applyGitUpdate());
   },
 
   initTerminal() {
