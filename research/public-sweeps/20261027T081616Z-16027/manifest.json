@@ -1,0 +1,46 @@
+[
+  {
+    "source": "tteap-manual-2006",
+    "url": "https://www.azcourts.gov/Portals/0/27/FARE/Documents/TTEAP_608.pdf",
+    "retrieved_utc": "2026-10-27T08:16:16.849497+00:00",
+    "http_status": 200,
+    "final_url": "https://www.azcourts.gov/Portals/0/27/FARE/Documents/TTEAP_608.pdf",
+    "status": "retrieved",
+    "sha256": "3d113f554c691f85c1d69b89b34070ffe146d0c371f65b2f1827d7cc5a8cfe13",
+    "bytes": 49229,
+    "keyword_lines": 51
+  },
+  {
+    "source": "control-flags-2005",
+    "url": "https://www.azcourts.gov/Portals/0/27/FARE/Documents/Flags_605.pdf",
+    "retrieved_utc": "2026-10-27T08:16:19.898202+00:00",
+    "http_status": 200,
+    "final_url": "https://www.azcourts.gov/Portals/0/27/FARE/Documents/Flags_605.pdf",
+    "status": "retrieved",
+    "sha256": "bfc2e1575a6837bdca149bc73cf3ee88dfe272004c453095748a08bdad9bc3d3",
+    "bytes": 40645,
+    "keyword_lines": 7
+  },
+  {
+    "source": "committee-packet-2023",
+    "url": "https://www.azcourts.gov/Portals/0/74/Binder1%20Octo%202023%20DS%20AC%20Packet%20to%20publish.pdf",
+    "retrieved_utc": "2026-10-27T08:16:22.323441+00:00",
+    "http_status": 200,
+    "final_url": "https://www.azcourts.gov/Portals/0/74/Binder1%20Octo%202023%20DS%20AC%20Packet%20to%20publish.pdf",
+    "status": "retrieved",
+    "sha256": "8f0f89d326957a397e2cba475934c5f4d615c47b3b99222cfe46cd5cb6d8a394",
+    "bytes": 1212572,
+    "keyword_lines": 4
+  },
+  {
+    "source": "fare-cap-faq",
+    "url": "https://www.azcourts.gov/courtservices/Consolidated-Collections-Unit/Enhanced-FARE-and-Compliance-Assistance-Program-CAP",
+    "retrieved_utc": "2026-10-27T08:16:25.318977+00:00",
+    "http_status": 200,
+    "final_url": "https://www.azcourts.gov/courtservices/Consolidated-Collections-Unit/Enhanced-FARE-and-Compliance-Assistance-Program-CAP",
+    "status": "retrieved",
+    "sha256": "8a79d50b48bf3495394f1611cc7d4bdc55a6b4091246a59fedeca974208d77da",
+    "bytes": 47524,
+    "keyword_lines": 10
+  }
+]
